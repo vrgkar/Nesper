@@ -1,0 +1,1 @@
+add_library(NesperGUI OBJECT window/window.cpp app.cpp)

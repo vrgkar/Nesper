@@ -1,0 +1,1 @@
+add_library(utils parser/parser.cpp parser/parser_factory.cpp parser/nes2parser.cpp parser/inesparser.cpp)
