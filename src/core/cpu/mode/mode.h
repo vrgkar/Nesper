@@ -4,7 +4,7 @@
 #include <coroutine>
 #include <variant>
 
-#include "../register/register.h"
+#include "../cpuregister/cpuregister.h"
 
 class CPU;
 
@@ -63,10 +63,10 @@ private:
 class Mode
 {
 public:
-    virtual ModeTask execute(CPU &cpu, Register &r) const = 0;
+    virtual ModeTask execute(CPU &cpu, CPURegister &r) const = 0;
     virtual std::string_view get_id() const = 0;
 
-    bool step(CPU &cpu, Register &r)
+    bool step(CPU &cpu, CPURegister &r)
     {
         static auto task = execute(cpu, r);
 
@@ -91,90 +91,90 @@ private:
 class IMP final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "IMP"; }
 };
 
 class IMM final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "IMM"; }
 };
 
 class ZPG final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ZPG"; }
 };
 
 class ZPX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ZPX"; }
 };
 
 class ZPY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ZPY"; }
 };
 
 class ACC final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ACC"; }
 };
 
 class REL final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "REL"; }
 };
 
 class ABS final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ABS"; }
 };
 
 class ABX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ABX"; }
 };
 
 class ABY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "ABY"; }
 };
 
 class IND final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "IND"; }
 };
 
 class IDX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "IDX"; }
 };
 
 class IDY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, Register &r) const override;
+    ModeTask execute(CPU &cpu, CPURegister &r) const override;
     std::string_view get_id() const override { return "IDY"; }
 };

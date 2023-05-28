@@ -4,18 +4,18 @@
 #include <iostream>
 #include <iomanip>
 
-void IdleState::execute(CPU &cpu, Register &r) const
+void IdleState::execute(CPU &cpu, CPURegister &r) const
 {
     return;
 }
 
-void ReadyState::execute(CPU &cpu, Register &r) const
+void ReadyState::execute(CPU &cpu, CPURegister &r) const
 {
     cpu.set_state(std::make_shared<FetchState>());
     cpu.execute_state();
 }
 
-void FetchState::execute(CPU &cpu, Register &r) const
+void FetchState::execute(CPU &cpu, CPURegister &r) const
 {
     /* Fetch opcode from memory */
     cpu.m_op = cpu.read(r.pc++);
@@ -24,7 +24,7 @@ void FetchState::execute(CPU &cpu, Register &r) const
     cpu.execute_state();
 }
 
-void DecodeState::execute(CPU &cpu, Register &r) const
+void DecodeState::execute(CPU &cpu, CPURegister &r) const
 {
 
     switch (cpu.m_op) {
@@ -1063,7 +1063,7 @@ void DecodeState::execute(CPU &cpu, Register &r) const
     cpu.execute_state();
 }
 
-void ExecuteState::execute(CPU &cpu, Register &r) const
+void ExecuteState::execute(CPU &cpu, CPURegister &r) const
 {
     ++cpu.m_cycles;    
     if (cpu.step_mode())

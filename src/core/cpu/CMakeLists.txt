@@ -1,6 +1,6 @@
 add_library(cpu 
     cpu.cpp 
-    register/register.cpp 
+    cpuregister/cpuregister.cpp 
     opcode/opcode.cpp 
     mode/mode.cpp 
     state/state.cpp 

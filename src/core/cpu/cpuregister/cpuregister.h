@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <bitset>
 
-struct Register
+struct CPURegister
 {
     enum class StackRegister
     {
@@ -17,8 +17,8 @@ struct Register
         N
     };
 
-    Register();
-    ~Register();
+    CPURegister();
+    ~CPURegister();
 
     void reset();
 

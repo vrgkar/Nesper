@@ -8,7 +8,7 @@
 #include "../bus/bus.h"
 
 #include "../system/component/component.h"
-#include "register/register.h"
+#include "cpuregister/cpuregister.h"
 #include "state/state.h"
 #include "opcode/opcode.h"
 #include "mode/mode.h"
@@ -55,7 +55,7 @@ public:
     int m_cycles;
     int m_op;
 
-    Register m_r;
+    CPURegister m_r;
 
 
 private:    

@@ -1,14 +1,14 @@
 #include "opcode.h"
 #include "../cpu.h"
 
-OpcodeTask ADC::execute(CPU &cpu, Register &r) const
+OpcodeTask ADC::execute(CPU &cpu, CPURegister &r) const
 {
-    uint16_t temp = r.a + r.mdr + r.test(Register::StackRegister::C);
+    uint16_t temp = r.a + r.mdr + r.test(CPURegister::StackRegister::C);
 
-    r.set(Register::StackRegister::C, temp > 0x00FFu);
-    r.set(Register::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    r.set(Register::StackRegister::V, ((temp ^ r.a) & ~(r.a ^ r.mdr)) & 0x0080u);
-    r.set(Register::StackRegister::N, temp & 0x0080u);
+    r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
+    r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
+    r.set(CPURegister::StackRegister::V, ((temp ^ r.a) & ~(r.a ^ r.mdr)) & 0x0080u);
+    r.set(CPURegister::StackRegister::N, temp & 0x0080u);
 
     /* Wrte sum into A */
     r.a = temp & 0x00FFu;
@@ -16,17 +16,17 @@ OpcodeTask ADC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask AND::execute(CPU &cpu, Register &r) const
+OpcodeTask AND::execute(CPU &cpu, CPURegister &r) const
 {
     /* Perform AND with A and MDR and write to A */
     r.a &= r.mdr;
-    r.set(Register::StackRegister::Z, r.a == 0x00u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0x00u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask ASL::execute(CPU &cpu, Register &r) const
+OpcodeTask ASL::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1; /* Re read from effective address */
@@ -44,10 +44,10 @@ OpcodeTask ASL::execute(CPU &cpu, Register &r) const
     if (cpu.get_mode_id() != "ACC")
         cpu.write(r.mdr, r.mar);
 
-    r.set(Register::StackRegister::C, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::C, r.mdr & 0x80u);
     r.mdr <<= 1u;
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
 
     if (cpu.get_mode_id() == "ACC")
     {
@@ -64,9 +64,9 @@ OpcodeTask ASL::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BCC::execute(CPU &cpu, Register &r) const
+OpcodeTask BCC::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::C) == false)
+    if (r.test(CPURegister::StackRegister::C) == false)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -78,9 +78,9 @@ OpcodeTask BCC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BCS::execute(CPU &cpu, Register &r) const
+OpcodeTask BCS::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::C) == true)
+    if (r.test(CPURegister::StackRegister::C) == true)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -92,9 +92,9 @@ OpcodeTask BCS::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BEQ::execute(CPU &cpu, Register &r) const
+OpcodeTask BEQ::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::Z) == true)
+    if (r.test(CPURegister::StackRegister::Z) == true)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -106,23 +106,23 @@ OpcodeTask BEQ::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BIT::execute(CPU &cpu, Register &r) const
+OpcodeTask BIT::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Z if result is zero */
-    r.set(Register::StackRegister::Z, !(r.a & r.mdr));
+    r.set(CPURegister::StackRegister::Z, !(r.a & r.mdr));
 
     /* Set V to Bit 6 */
-    r.set(Register::StackRegister::V, r.mdr & 0x40u);
+    r.set(CPURegister::StackRegister::V, r.mdr & 0x40u);
 
     /* Set N to Bit 7 */
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask BMI::execute(CPU &cpu, Register &r) const
+OpcodeTask BMI::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::N) == true)
+    if (r.test(CPURegister::StackRegister::N) == true)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -134,9 +134,9 @@ OpcodeTask BMI::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BNE::execute(CPU &cpu, Register &r) const
+OpcodeTask BNE::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::Z) == false)
+    if (r.test(CPURegister::StackRegister::Z) == false)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -148,9 +148,9 @@ OpcodeTask BNE::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BPL::execute(CPU &cpu, Register &r) const
+OpcodeTask BPL::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::N) == false)
+    if (r.test(CPURegister::StackRegister::N) == false)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -162,7 +162,7 @@ OpcodeTask BPL::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BRK::execute(CPU &cpu, Register &r) const
+OpcodeTask BRK::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set B Flag of SR to true, and push incremented PCH into the stack*/
     cpu.write(r.pc >> 8u, 0x100u + r.sp--);
@@ -173,9 +173,9 @@ OpcodeTask BRK::execute(CPU &cpu, Register &r) const
     co_yield 0;
 
     /* Push P into the stack */
-    r.set(Register::StackRegister::B, true);
+    r.set(CPURegister::StackRegister::B, true);
     cpu.write(r.sr, 0x100u + r.sp--);
-    r.set(Register::StackRegister::B, false);
+    r.set(CPURegister::StackRegister::B, false);
     co_yield 0;
 
     r.pc = cpu.read(0xFFFEu);
@@ -186,9 +186,9 @@ OpcodeTask BRK::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BVC::execute(CPU &cpu, Register &r) const
+OpcodeTask BVC::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::V) == false)
+    if (r.test(CPURegister::StackRegister::V) == false)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -200,9 +200,9 @@ OpcodeTask BVC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask BVS::execute(CPU &cpu, Register &r) const
+OpcodeTask BVS::execute(CPU &cpu, CPURegister &r) const
 {
-    if (r.test(Register::StackRegister::V) == true)
+    if (r.test(CPURegister::StackRegister::V) == true)
     {
         r.pc += static_cast<int8_t>(r.mdr);
         co_yield 1;
@@ -214,69 +214,69 @@ OpcodeTask BVS::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask CLC::execute(CPU &cpu, Register &r) const
+OpcodeTask CLC::execute(CPU &cpu, CPURegister &r) const
 {
     /* Clear Carry Flag */
-    r.set(Register::StackRegister::C, false);
+    r.set(CPURegister::StackRegister::C, false);
 
     co_return 0;
 }
 
-OpcodeTask CLD::execute(CPU &cpu, Register &r) const
+OpcodeTask CLD::execute(CPU &cpu, CPURegister &r) const
 {
     /* Clear Decimal Flag */
-    r.set(Register::StackRegister::D, false);
+    r.set(CPURegister::StackRegister::D, false);
 
     co_return 0;
 }
 
-OpcodeTask CLI::execute(CPU &cpu, Register &r) const
+OpcodeTask CLI::execute(CPU &cpu, CPURegister &r) const
 {
     /* Clear Interrupt Disabled Flag */
-    r.set(Register::StackRegister::I, false);
+    r.set(CPURegister::StackRegister::I, false);
 
     co_return 0;
 }
 
-OpcodeTask CLV::execute(CPU &cpu, Register &r) const
+OpcodeTask CLV::execute(CPU &cpu, CPURegister &r) const
 {
     /* Clear Overflow Flag */
-    r.set(Register::StackRegister::V, false);
+    r.set(CPURegister::StackRegister::V, false);
 
     co_return 0;
 }
 
-OpcodeTask CMP::execute(CPU &cpu, Register &r) const
+OpcodeTask CMP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Flags */
-    r.set(Register::StackRegister::C, r.a >= r.mdr);
-    r.set(Register::StackRegister::Z, r.a == r.mdr);
-    r.set(Register::StackRegister::N, (r.a - r.mdr) & 0x80u);
+    r.set(CPURegister::StackRegister::C, r.a >= r.mdr);
+    r.set(CPURegister::StackRegister::Z, r.a == r.mdr);
+    r.set(CPURegister::StackRegister::N, (r.a - r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask CPX::execute(CPU &cpu, Register &r) const
+OpcodeTask CPX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Flags */
-    r.set(Register::StackRegister::C, r.x >= r.mdr);
-    r.set(Register::StackRegister::Z, r.x == r.mdr);
-    r.set(Register::StackRegister::N, (r.x - r.mdr) & 0x80u);
+    r.set(CPURegister::StackRegister::C, r.x >= r.mdr);
+    r.set(CPURegister::StackRegister::Z, r.x == r.mdr);
+    r.set(CPURegister::StackRegister::N, (r.x - r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask CPY::execute(CPU &cpu, Register &r) const
+OpcodeTask CPY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Flags */
-    r.set(Register::StackRegister::C, r.y >= r.mdr);
-    r.set(Register::StackRegister::Z, r.y == r.mdr);
-    r.set(Register::StackRegister::N, (r.y - r.mdr) & 0x80u);
+    r.set(CPURegister::StackRegister::C, r.y >= r.mdr);
+    r.set(CPURegister::StackRegister::Z, r.y == r.mdr);
+    r.set(CPURegister::StackRegister::N, (r.y - r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask DEC::execute(CPU &cpu, Register &r) const
+OpcodeTask DEC::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
@@ -295,8 +295,8 @@ OpcodeTask DEC::execute(CPU &cpu, Register &r) const
     r.mdr -= 1u;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
     co_yield 0;
 
     /* Write MDR at address MAR */
@@ -305,43 +305,43 @@ OpcodeTask DEC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask DEX::execute(CPU &cpu, Register &r) const
+OpcodeTask DEX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Decrement X */
     r.x -= 1u;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.x == 0u);
-    r.set(Register::StackRegister::N, r.x & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.x == 0u);
+    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask DEY::execute(CPU &cpu, Register &r) const
+OpcodeTask DEY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Decrement Y */
     r.y -= 1u;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.y == 0u);
-    r.set(Register::StackRegister::N, r.y & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.y == 0u);
+    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask EOR::execute(CPU &cpu, Register &r) const
+OpcodeTask EOR::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set A to A XOR MDR */
     r.a ^= r.mdr;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask INC::execute(CPU &cpu, Register &r) const
+OpcodeTask INC::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
@@ -359,8 +359,8 @@ OpcodeTask INC::execute(CPU &cpu, Register &r) const
     /* Increment MDR */
     r.mdr += 1;
 
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
     co_yield 0;
 
     cpu.write(r.mdr, r.mar);
@@ -368,31 +368,31 @@ OpcodeTask INC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask INX::execute(CPU &cpu, Register &r) const
+OpcodeTask INX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Increment X */
     r.x += 1;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.x == 0u);
-    r.set(Register::StackRegister::N, r.x & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.x == 0u);
+    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask INY::execute(CPU &cpu, Register &r) const
+OpcodeTask INY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Increment Y */
     r.y += 1;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.y == 0u);
-    r.set(Register::StackRegister::N, r.y & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.y == 0u);
+    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask JMP::execute(CPU &cpu, Register &r) const
+OpcodeTask JMP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set PC to MAR */
     r.pc = r.mar;
@@ -400,7 +400,7 @@ OpcodeTask JMP::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask JSR::execute(CPU &cpu, Register &r) const
+OpcodeTask JSR::execute(CPU &cpu, CPURegister &r) const
 {
     /* Push Decremented PCH into stack */
     cpu.write(--r.pc >> 8u, 0x100u + r.sp--);
@@ -416,37 +416,37 @@ OpcodeTask JSR::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask LDA::execute(CPU &cpu, Register &r) const
+OpcodeTask LDA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Write contents of MDR to A */
     r.a = r.mdr;
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LDX::execute(CPU &cpu, Register &r) const
+OpcodeTask LDX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Write contents of MDR to X */
     r.x = r.mdr;
-    r.set(Register::StackRegister::Z, r.x == 0u);
-    r.set(Register::StackRegister::N, r.x & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.x == 0u);
+    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LDY::execute(CPU &cpu, Register &r) const
+OpcodeTask LDY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Write contents of MDR to Y */
     r.y = r.mdr;
-    r.set(Register::StackRegister::Z, r.y == 0u);
-    r.set(Register::StackRegister::N, r.y & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.y == 0u);
+    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LSR::execute(CPU &cpu, Register &r) const
+OpcodeTask LSR::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
@@ -461,10 +461,10 @@ OpcodeTask LSR::execute(CPU &cpu, Register &r) const
     else if (cpu.get_mode_id() != "ACC")
         co_yield 0;
 
-    r.set(Register::StackRegister::C, r.mdr & 0x01u);
+    r.set(CPURegister::StackRegister::C, r.mdr & 0x01u);
     r.mdr >>= 1u;
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
 
     if (cpu.get_mode_id() != "ACC")
     {
@@ -478,24 +478,24 @@ OpcodeTask LSR::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask NOP::execute(CPU &cpu, Register &r) const
+OpcodeTask NOP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Do Nothing */
     co_return 0;
 }
 
-OpcodeTask ORA::execute(CPU &cpu, Register &r) const
+OpcodeTask ORA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set A = A | MDR */
     r.a |= r.mdr; /* Push A into the stack */
 
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask PHA::execute(CPU &cpu, Register &r) const
+OpcodeTask PHA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -505,7 +505,7 @@ OpcodeTask PHA::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask PHP::execute(CPU &cpu, Register &r) const
+OpcodeTask PHP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -515,7 +515,7 @@ OpcodeTask PHP::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask PLA::execute(CPU &cpu, Register &r) const
+OpcodeTask PLA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -527,13 +527,13 @@ OpcodeTask PLA::execute(CPU &cpu, Register &r) const
     /* Pull A from stack */
     r.a = cpu.read(0x100u + r.sp);
 
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask PLP::execute(CPU &cpu, Register &r) const
+OpcodeTask PLP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -546,13 +546,13 @@ OpcodeTask PLP::execute(CPU &cpu, Register &r) const
     r.mdr = r.sr;
     r.sr = cpu.read(0x100u + r.sp);
 
-    r.set(Register::StackRegister::X, r.mdr & 0x20u);
-    r.set(Register::StackRegister::B, r.mdr & 0x10u);
+    r.set(CPURegister::StackRegister::X, r.mdr & 0x20u);
+    r.set(CPURegister::StackRegister::B, r.mdr & 0x10u);
 
     co_return 0;
 }
 
-OpcodeTask ROL::execute(CPU &cpu, Register &r) const
+OpcodeTask ROL::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
@@ -569,11 +569,11 @@ OpcodeTask ROL::execute(CPU &cpu, Register &r) const
 
     auto C = r.mdr >> 7u;
 
-    r.mdr = r.mdr << 1u | r.test(Register::StackRegister::C);
+    r.mdr = r.mdr << 1u | r.test(CPURegister::StackRegister::C);
 
-    r.set(Register::StackRegister::C, C);
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr & 0x80u);
+    r.set(CPURegister::StackRegister::C, C);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
 
     if (cpu.get_mode_id() != "ACC")
     {
@@ -588,7 +588,7 @@ OpcodeTask ROL::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask ROR::execute(CPU &cpu, Register &r) const
+OpcodeTask ROR::execute(CPU &cpu, CPURegister &r) const
 {
     if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
         co_yield -1;
@@ -605,11 +605,11 @@ OpcodeTask ROR::execute(CPU &cpu, Register &r) const
 
     auto C = r.mdr & 0x0001u;
 
-    r.mdr = r.mdr >> 1u | r.test(Register::StackRegister::C) << 7u;
+    r.mdr = r.mdr >> 1u | r.test(CPURegister::StackRegister::C) << 7u;
 
-    r.set(Register::StackRegister::C, C);
-    r.set(Register::StackRegister::Z, r.mdr == 0u);
-    r.set(Register::StackRegister::N, r.mdr >> 7u);
+    r.set(CPURegister::StackRegister::C, C);
+    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
+    r.set(CPURegister::StackRegister::N, r.mdr >> 7u);
 
     if (cpu.get_mode_id() != "ACC")
     {
@@ -624,7 +624,7 @@ OpcodeTask ROR::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask RTI::execute(CPU &cpu, Register &r) const
+OpcodeTask RTI::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -637,8 +637,8 @@ OpcodeTask RTI::execute(CPU &cpu, Register &r) const
     r.mdr = r.sr;
     r.sr = cpu.read(0x100u + r.sp);
 
-    r.set(Register::StackRegister::X, r.mdr & 0x20u);
-    r.set(Register::StackRegister::B, r.mdr & 0x10u);
+    r.set(CPURegister::StackRegister::X, r.mdr & 0x20u);
+    r.set(CPURegister::StackRegister::B, r.mdr & 0x10u);
     co_yield 0;
 
     /* Pull PCL from the Stack */
@@ -651,7 +651,7 @@ OpcodeTask RTI::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask RTS::execute(CPU &cpu, Register &r) const
+OpcodeTask RTS::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after dummy read */
     co_yield 0;
@@ -673,48 +673,48 @@ OpcodeTask RTS::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask SBC::execute(CPU &cpu, Register &r) const
+OpcodeTask SBC::execute(CPU &cpu, CPURegister &r) const
 {
     /* Invert bits of MDR */
     uint16_t value = r.mdr ^ 0x00FFu;
 
-    uint16_t temp = r.a + value + r.test(Register::StackRegister::C);
+    uint16_t temp = r.a + value + r.test(CPURegister::StackRegister::C);
 
-    r.set(Register::StackRegister::C, temp > 0x00FFu);
-    r.set(Register::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    r.set(Register::StackRegister::V, ((temp ^ r.a) & (r.a ^ r.mdr)) & 0x0080u);
-    r.set(Register::StackRegister::N, temp & 0x0080u);
+    r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
+    r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
+    r.set(CPURegister::StackRegister::V, ((temp ^ r.a) & (r.a ^ r.mdr)) & 0x0080u);
+    r.set(CPURegister::StackRegister::N, temp & 0x0080u);
 
     r.a = temp & 0x00FFu;
 
     co_return 0;
 }
 
-OpcodeTask SEC::execute(CPU &cpu, Register &r) const
+OpcodeTask SEC::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Carry Flag to True */
-    r.set(Register::StackRegister::C, true);
+    r.set(CPURegister::StackRegister::C, true);
 
     co_return 0;
 }
 
-OpcodeTask SED::execute(CPU &cpu, Register &r) const
+OpcodeTask SED::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Decimal Flag to True */
-    r.set(Register::StackRegister::D, true);
+    r.set(CPURegister::StackRegister::D, true);
 
     co_return 0;
 }
 
-OpcodeTask SEI::execute(CPU &cpu, Register &r) const
+OpcodeTask SEI::execute(CPU &cpu, CPURegister &r) const
 {
     /* Set Interrupt Disable Flag to True */
-    r.set(Register::StackRegister::I, true);
+    r.set(CPURegister::StackRegister::I, true);
 
     co_return 0;
 }
 
-OpcodeTask STA::execute(CPU &cpu, Register &r) const
+OpcodeTask STA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Take an extra cycle if high byte was not fixed */
     if (cpu.get_mode_id() == "IDY" && (r.mar >> 8u == r.mar - r.y >> 8u))
@@ -730,7 +730,7 @@ OpcodeTask STA::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask STX::execute(CPU &cpu, Register &r) const
+OpcodeTask STX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Store X at MAR */
     cpu.write(r.x, r.mar);
@@ -738,7 +738,7 @@ OpcodeTask STX::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask STY::execute(CPU &cpu, Register &r) const
+OpcodeTask STY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Store X at MAR */
     cpu.write(r.y, r.mar);
@@ -746,55 +746,55 @@ OpcodeTask STY::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask TAX::execute(CPU &cpu, Register &r) const
+OpcodeTask TAX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Transfer A to X */
     r.x = r.a;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.x == 0u);
-    r.set(Register::StackRegister::N, r.x & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.x == 0u);
+    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TAY::execute(CPU &cpu, Register &r) const
+OpcodeTask TAY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Transfer A to Y */
     r.y = r.a;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.y == 0u);
-    r.set(Register::StackRegister::N, r.y & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.y == 0u);
+    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TSX::execute(CPU &cpu, Register &r) const
+OpcodeTask TSX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Transfer SP to X */
     r.x = r.sp;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.x == 0u);
-    r.set(Register::StackRegister::N, r.x & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.x == 0u);
+    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TXA::execute(CPU &cpu, Register &r) const
+OpcodeTask TXA::execute(CPU &cpu, CPURegister &r) const
 {
     /* Transfer X to A */
     r.a = r.x;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TXS::execute(CPU &cpu, Register &r) const
+OpcodeTask TXS::execute(CPU &cpu, CPURegister &r) const
 {
     /* Transfer X to SP */
     r.sp = r.x;
@@ -802,13 +802,13 @@ OpcodeTask TXS::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-OpcodeTask TYA::execute(CPU &cpu, Register &r) const
+OpcodeTask TYA::execute(CPU &cpu, CPURegister &r) const
 {
     r.a = r.y;
 
     /* Set Flags */
-    r.set(Register::StackRegister::Z, r.a == 0u);
-    r.set(Register::StackRegister::N, r.a & 0x80u);
+    r.set(CPURegister::StackRegister::Z, r.a == 0u);
+    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
 
     co_return 0;
 }

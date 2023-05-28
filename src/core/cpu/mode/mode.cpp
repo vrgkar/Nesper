@@ -1,7 +1,7 @@
 #include "mode.h"
 #include "../cpu.h"
 
-ModeTask IMP::execute(CPU &cpu, Register &r) const
+ModeTask IMP::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -12,7 +12,7 @@ ModeTask IMP::execute(CPU &cpu, Register &r) const
     co_return 0;    
 }
 
-ModeTask ACC::execute(CPU &cpu, Register &r) const
+ModeTask ACC::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -24,7 +24,7 @@ ModeTask ACC::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask IMM::execute(CPU &cpu, Register &r) const
+ModeTask IMM::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -35,7 +35,7 @@ ModeTask IMM::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ZPG::execute(CPU &cpu, Register &r) const
+ModeTask ZPG::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -51,7 +51,7 @@ ModeTask ZPG::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ZPX::execute(CPU &cpu, Register &r) const
+ModeTask ZPX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -71,7 +71,7 @@ ModeTask ZPX::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ZPY::execute(CPU &cpu, Register &r) const
+ModeTask ZPY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -91,7 +91,7 @@ ModeTask ZPY::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask REL::execute(CPU &cpu, Register &r) const
+ModeTask REL::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -102,7 +102,7 @@ ModeTask REL::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ABS::execute(CPU &cpu, Register &r) const
+ModeTask ABS::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -123,7 +123,7 @@ ModeTask ABS::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ABX::execute(CPU &cpu, Register &r) const
+ModeTask ABX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -147,7 +147,7 @@ ModeTask ABX::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask ABY::execute(CPU &cpu, Register &r) const
+ModeTask ABY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -170,7 +170,7 @@ ModeTask ABY::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask IND::execute(CPU &cpu, Register &r) const
+ModeTask IND::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -195,7 +195,7 @@ ModeTask IND::execute(CPU &cpu, Register &r) const
 
 }
 
-ModeTask IDX::execute(CPU &cpu, Register &r) const
+ModeTask IDX::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
@@ -223,7 +223,7 @@ ModeTask IDX::execute(CPU &cpu, Register &r) const
     co_return 0;
 }
 
-ModeTask IDY::execute(CPU &cpu, Register &r) const
+ModeTask IDY::execute(CPU &cpu, CPURegister &r) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
