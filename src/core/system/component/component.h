@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string_view>
 
+class System;
+
 class Component
 {
 public:
@@ -18,5 +20,12 @@ public:
     /* Returns the ID of the component */
     virtual std::string_view get_id() = 0;
 
-    virtual ~Component() = default;
+    virtual void broadcast(Event event);
+    virtual void receive(Event event) = 0;
+    virtual void service() = 0;
+
+    virtual ~Component() = default; 
+
+protected:
+    System *system = nullptr;
 };
