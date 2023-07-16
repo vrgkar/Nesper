@@ -50,5 +50,5 @@ int main(int argc, char **argv)
     cpu.m_r.pc = 0xC000u;
 
     while (true)
-        cpu.execute();
+        cpu.step();
 }

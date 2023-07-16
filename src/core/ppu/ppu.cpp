@@ -96,7 +96,7 @@ bool PPU::commit(uint8_t byte, uint16_t addr)
     return true;
 }
 
-void PPU::execute()
+void PPU::step()
 {
 
 }

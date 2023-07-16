@@ -27,8 +27,7 @@ public:
     std::string_view get_id() override { return "CPU"; }
 
     /* CPU Functions */
-    void execute();
-    void step(int n);
+    void step();
     bool step_opcode() { return m_opcode->step(*this, m_r); }
     bool step_mode() { return m_mode->step(*this, m_r); }
     void poll_interrupts();

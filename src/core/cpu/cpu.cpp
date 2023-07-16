@@ -22,16 +22,10 @@ bool CPU::commit(uint8_t byte, uint16_t addr)
     return true;
 }
 
-void CPU::execute()
+void CPU::step()
 {
     execute_state();
-    tick();
-}
-
-void CPU::step(int n)
-{
-    for (int i = 0; i < n; i++)
-        execute();
+    tick();   
 }
 
 void CPU::poll_interrupts()

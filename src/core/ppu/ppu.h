@@ -13,7 +13,7 @@ public:
     bool fetch(uint8_t &byte, uint16_t addr) override;
     bool commit(uint8_t byte, uint16_t addr) override;
 
-    void execute();
+    void step();
 
     std::string_view get_id() override { return "PPU"; }
 
