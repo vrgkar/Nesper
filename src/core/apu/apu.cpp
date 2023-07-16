@@ -19,3 +19,8 @@ bool APU::commit(uint8_t byte, uint16_t addr)
 
     return true;
 }
+
+void APU::service(Event event)
+{
+    
+}

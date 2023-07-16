@@ -22,4 +22,7 @@ bool Cartridge::commit(uint8_t byte, uint16_t addr)
     return m_mapper->write(m_memory, byte, addr);
 }
 
-
+void Cartridge::service(Event event)
+{
+    
+}

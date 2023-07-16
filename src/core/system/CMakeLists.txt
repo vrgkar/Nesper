@@ -1,2 +1,2 @@
-add_library(system component/component.cpp)
+add_library(system system.cpp component/component.cpp)
 

@@ -96,6 +96,11 @@ bool PPU::commit(uint8_t byte, uint16_t addr)
     return true;
 }
 
+void PPU::service(Event event)
+{
+
+}
+
 void PPU::step()
 {
 

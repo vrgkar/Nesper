@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string_view>
 
+#include "../event/event.h"
+
 class System;
 
 class Component
@@ -21,8 +23,7 @@ public:
     virtual std::string_view get_id() = 0;
 
     virtual void broadcast(Event event);
-    virtual void receive(Event event) = 0;
-    virtual void service() = 0;
+    virtual void service(Event event);
 
     virtual ~Component() = default; 
 

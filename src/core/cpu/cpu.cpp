@@ -28,5 +28,7 @@ void CPU::step()
     tick();   
 }
 
-void CPU::poll_interrupts()
-{}
+void CPU::service(Event event)
+{
+    
+}

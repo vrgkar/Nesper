@@ -26,6 +26,8 @@ public:
     bool commit(uint8_t byte, uint16_t addr) override;
     std::string_view get_id() override { return "CPU"; }
 
+    void service(Event event) override;
+
     /* CPU Functions */
     void step();
     bool step_opcode() { return m_opcode->step(*this, m_r); }
