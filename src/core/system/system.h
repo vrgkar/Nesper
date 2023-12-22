@@ -9,8 +9,8 @@ class System
 {
 public:
 
-    void receive(Component *comp, Event event) { m_events.push(std::make_pair(event, comp)); }
-    virtual void service() = 0;
+    virtual void receive(Component *comp, Event event) { m_events.push(std::make_pair(event, comp)); }
+    virtual void service() {};
 
     virtual ~System() = default;
 
