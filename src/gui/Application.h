@@ -1,7 +1,8 @@
 #pragma once
 
 #include <wx/wx.h>
-#include "window/window.h"
+
+#include "MainWindow/MainWindow.h"
 
 class App : public wxApp
 {

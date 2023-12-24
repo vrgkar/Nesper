@@ -1,1 +1,0 @@
-add_library(NesperGUIWindow OBJECT window.cpp)
