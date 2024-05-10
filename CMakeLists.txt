@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.20)
 
 project(
 Nesper
@@ -11,10 +11,10 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# find_package(wxWidgets REQUIRED COMPONENTS net core base)
-# find_package(SDL2 REQUIRED)
+find_package(wxWidgets REQUIRED COMPONENTS net core base)
+include(${wxWidgets_USE_FILE})
 
-# include(${wxWidgets_USE_FILE})
+add_subdirectory(src bin)
 
 add_executable(Nesper src/main.cpp)
-add_subdirectory(src bin)
+target_link_libraries(Nesper core gui)

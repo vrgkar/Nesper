@@ -1,10 +1,10 @@
 add_library(cpu 
     cpu.cpp 
-    cpuregister/cpuregister.cpp 
-    opcode/opcode.cpp 
-    mode/mode.cpp 
-    state/state.cpp 
-    interrupt/interrupt.cpp 
+    cpuregister.cpp 
+    opcode.cpp 
+    mode.cpp 
+    state.cpp 
+    interrupt.cpp 
     )
 
 target_link_libraries(cpu PUBLIC system bus)

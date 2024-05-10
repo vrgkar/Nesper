@@ -1,5 +1,5 @@
 include_directories(core/)
-
+include_directories(gui/)
 
 add_subdirectory(core)
-target_link_libraries(Nesper PRIVATE core)
+add_subdirectory(gui)
