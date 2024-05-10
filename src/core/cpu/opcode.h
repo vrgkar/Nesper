@@ -3,7 +3,7 @@
 #include <string_view>
 #include <coroutine>
 
-#include "../cpuregister/cpuregister.h"
+#include "cpuregister.h"
 
 class CPU;
 

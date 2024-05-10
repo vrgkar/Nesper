@@ -5,7 +5,7 @@
 #include "apu/apu.h"
 #include "ram/ram.h"
 #include "cartridge/cartridge.h"
-#include "system/system.h"
+#include "system.h"
 
 class NES : public System
 {

@@ -1,5 +1,5 @@
 #include "component.h"
-#include "../system.h"
+#include "system.h"
 
 void Component::broadcast(Event event)
 {

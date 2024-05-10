@@ -1,5 +1,5 @@
 #include "mode.h"
-#include "../cpu.h"
+#include "cpu.h"
 
 ModeTask IMP::execute(CPU &cpu, CPURegister &r) const
 {

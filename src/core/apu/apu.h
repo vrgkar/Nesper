@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../system/component/component.h"
+#include "component.h"
 
 class APU final : public Component
 {

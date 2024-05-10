@@ -1,8 +1,9 @@
 #include "state.h"
-#include "../cpu.h"
+#include "cpu.h"
 
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 void IdleState::execute(CPU &cpu, CPURegister &r) const
 {

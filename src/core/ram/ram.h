@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string_view>
 
-#include "../system/component/component.h"
+#include "component.h"
 
 class RAM final : public Component
 {

@@ -4,7 +4,7 @@
 #include <coroutine>
 #include <variant>
 
-#include "../cpuregister/cpuregister.h"
+#include "cpuregister.h"
 
 class CPU;
 

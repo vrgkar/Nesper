@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-#include "../cpuregister/cpuregister.h"
+#include "cpuregister.h"
 
 class CPU;
 

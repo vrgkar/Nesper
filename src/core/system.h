@@ -2,8 +2,8 @@
 
 #include <queue>
 
-#include "component/component.h"
-#include "event/event.h"
+#include "component.h"
+#include "common/event.h"
 
 class System
 {

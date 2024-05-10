@@ -2,10 +2,10 @@
 
 #include <array>
 
-#include "../system/component/component.h"
-#include "ppuregister/ppuregister.h"
+#include "component.h"
+#include "ppuregister.h"
 
-#include "../bus/bus.h"
+#include "bus/bus.h"
 
 class PPU final : public Component
 {

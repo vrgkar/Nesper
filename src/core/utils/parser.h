@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include "../../common/rom/rom.h"
+#include "common/rom.h"
 
 class Parser
 {

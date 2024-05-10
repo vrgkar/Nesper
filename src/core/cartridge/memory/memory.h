@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "../../common/rom/rom.h"
+#include "common/rom.h"
 
 class Memory
 {

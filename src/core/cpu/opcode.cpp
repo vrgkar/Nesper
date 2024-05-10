@@ -1,5 +1,5 @@
 #include "opcode.h"
-#include "../cpu.h"
+#include "cpu.h"
 
 OpcodeTask ADC::execute(CPU &cpu, CPURegister &r) const
 {

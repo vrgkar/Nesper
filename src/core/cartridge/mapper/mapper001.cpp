@@ -1,6 +1,6 @@
 #include "mapper001.h"
 
-bool Mapper00`::read(Memory &memory, uint8_t &byte, uint16_t addr)
+bool Mapper001::read(Memory &memory, uint8_t &byte, uint16_t addr)
 {
     if (addr < 0x2000u)
         byte = (memory.chr_banks() == 0u) ? memory.read_chrram(addr) : memory.read_chrrom(addr);

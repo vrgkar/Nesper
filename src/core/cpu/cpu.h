@@ -7,12 +7,12 @@
 
 #include "../bus/bus.h"
 
-#include "../system/component/component.h"
-#include "cpuregister/cpuregister.h"
-#include "state/state.h"
-#include "opcode/opcode.h"
-#include "mode/mode.h"
-#include "interrupt/interrupt.h"
+#include "component.h"
+#include "cpuregister.h"
+#include "state.h"
+#include "opcode.h"
+#include "mode.h"
+#include "interrupt.h"
 
 class CPU final : public Component
 {

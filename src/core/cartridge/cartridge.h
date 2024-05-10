@@ -7,7 +7,7 @@
 #include "mapper/mapper_factory.h"
 #include "memory/memory.h"
 
-#include "../system/component/component.h"
+#include "component.h"
 
 class Cartridge final : public Component
 {

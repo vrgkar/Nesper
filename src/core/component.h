@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <string_view>
 
-#include "../event/event.h"
+#include "common/event.h"
 
 class System;
 
