@@ -1,11 +1,11 @@
-#include "app.h"
+#include "Application.h"
 
-IMPLEMENT_APP_NO_MAIN(App)
+wxIMPLEMENT_APP_NO_MAIN(Application);
 
-bool App::OnInit()
+bool Application::OnInit()
 {
-    Window *window = new Window(wxT("Nesper"));
-    window->Show(true);
+    MainFrame *frame = new MainFrame("Nesper");
+    frame->Show(true);
 
     return true;
 }

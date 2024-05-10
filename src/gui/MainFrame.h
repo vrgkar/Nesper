@@ -6,10 +6,10 @@
 #include <wx/wfstream.h>
 
 
-class Window : public wxFrame
+class MainFrame : public wxFrame
 {
 public:
-    Window(const wxString &title);
+    MainFrame(const wxString &title);
 
     void OnLoad(wxCommandEvent &event);
     void OnQuit(wxCommandEvent &event);

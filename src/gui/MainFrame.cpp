@@ -1,6 +1,6 @@
-#include "window.h"
+#include "MainFrame.h"
 
-Window::Window(const wxString &title)
+MainFrame::MainFrame(const wxString &title)
     : wxFrame(nullptr, wxID_ANY, title, wxDefaultPosition, wxSize(800, 600))
 {
     m_menu = new wxMenuBar;
@@ -16,8 +16,8 @@ Window::Window(const wxString &title)
     m_file->Append(m_load);
     m_file->Append(m_quit);
 
-    Connect(wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(Window::OnQuit));
-    Connect(wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(Window::OnLoad));
+    Connect(wxID_EXIT, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainFrame::OnQuit));
+    Connect(wxID_OPEN, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler(MainFrame::OnLoad));
 
     m_menu->Append(m_file, wxT("&File"));
     m_menu->Append(m_options, wxT("&Options"));
@@ -28,17 +28,15 @@ Window::Window(const wxString &title)
     Centre();
 }
 
-void Window::OnQuit(wxCommandEvent & WXUNUSED(event))
+void MainFrame::OnQuit(wxCommandEvent & WXUNUSED(event))
 {
     Close(true);
 }
 
-void Window::OnLoad(wxCommandEvent & WXUNUSED(event))
+void MainFrame::OnLoad(wxCommandEvent & WXUNUSED(event))
 {
     wxFileDialog openFileDialog(this, _("Open NES file"), "", "", "NES files (*.nes)|*.nes", wxFD_OPEN|wxFD_FILE_MUST_EXIST);
     if (openFileDialog.ShowModal() == wxID_CANCEL)
-        return;
-
-    
+        return;    
 }
 

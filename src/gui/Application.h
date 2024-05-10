@@ -2,12 +2,12 @@
 
 #include <wx/wx.h>
 
-#include "MainWindow/MainWindow.h"
+#include "MainFrame.h"
 
-class App : public wxApp
+class Application : public wxApp
 {
 public:
-    virtual bool OnInit();
+    virtual bool OnInit() override;
 };
 
-DECLARE_APP(App)
+wxDECLARE_APP(Application);
