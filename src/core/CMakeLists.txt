@@ -1,5 +1,5 @@
 add_library(core nes.cpp)
-add_library(system component.cpp system.cpp)
+add_library(system component.cpp)
 
 add_subdirectory(apu)
 add_subdirectory(bus)
