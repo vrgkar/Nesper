@@ -5,8 +5,6 @@
 
 #include "common/event.h"
 
-class System;
-
 class Component
 {
 public:
@@ -27,6 +25,4 @@ public:
 
     virtual ~Component() = default; 
 
-protected:
-    System *system = nullptr;
 };

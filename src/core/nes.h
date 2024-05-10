@@ -5,21 +5,20 @@
 #include "apu/apu.h"
 #include "ram/ram.h"
 #include "cartridge/cartridge.h"
-#include "system.h"
 
-class NES : public System
+class Nesper
 {
 public:
-    void execute();
-
-    virtual void service() override;
+    Nesper() = delete;
+    void operator=(const Nesper&) = delete;
 
 private:
-    Bus m_bus;
 
-    CPU m_cpu;
-    PPU m_ppu;
-    APU m_apu;
-    RAM m_ram;
-    Cartridge m_cart;
+    static CPU m_cpu;
+    static PPU m_ppu;
+    static APU m_apu;
+    static RAM m_ram;
+    static Cartridge m_cart;
+
+    static Bus m_bus;
 };
