@@ -19,8 +19,8 @@ public:
     /* Returns the ID of the component */
     virtual std::string_view get_id() const = 0;
 
-    virtual void broadcast(Event event);
-    virtual void service(Event event);
+    virtual void broadcast(Event event) = 0;
+    virtual void service(Event event) = 0;
 
     virtual ~Component() = default; 
 
