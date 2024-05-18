@@ -4,7 +4,7 @@
 #include "ppu/ppu.h"
 #include "apu/apu.h"
 #include "ram/ram.h"
-#include "cartridge/cartridge.h"
+#include "mapper/mapper.h"
 
 class Nesper
 {
@@ -18,7 +18,7 @@ private:
     static PPU m_ppu;
     static APU m_apu;
     static RAM m_ram;
-    static Cartridge m_cart;
+    static Mapper m_map;
 
     static Bus m_bus;
 };
