@@ -1,180 +1,138 @@
 #pragma once
 
-#include <string_view>
-#include <coroutine>
-#include <variant>
+#include "common/pch.h"
+#include "common/task.h"
 
-#include "cpuregister.h"
-
-class CPU;
-
-struct ModeTask {
-    // The coroutine level type
-    struct promise_type {
-        using Handle = std::coroutine_handle<promise_type>;
-        void return_value(int value) { current_value = value; }
-        ModeTask get_return_object() {
-            return ModeTask{Handle::from_promise(*this)};
-        }
-        std::suspend_always initial_suspend() { return {}; }
-        std::suspend_always final_suspend() noexcept { return {}; }
-        std::suspend_always yield_value(int value) {
-            current_value = value;
-            return {};
-        }
-        void unhandled_exception() { }
-        int current_value;
-    };
-    explicit ModeTask(promise_type::Handle coro) : coro_(coro) {}
-    ~ModeTask() {
-        if (coro_) coro_.destroy();
-    }
-    // Make move-only
-    ModeTask(const ModeTask&) = delete;
-    ModeTask& operator=(const ModeTask&) = delete;
-    ModeTask(ModeTask&& t) noexcept : coro_(t.coro_) { 
-        t.coro_ = {};
-    }
-    ModeTask& operator=(ModeTask&& t) noexcept {
-        if (this == &t) return *this;
-        if (coro_) coro_.destroy();
-        coro_ = t.coro_;
-        t.coro_ = {};
-        return *this;
-    }
-    auto& operator()() noexcept
-    {
-        coro_.resume();
-        return get_value();
-    }
-
-    int& get_value() noexcept
-    {
-        return coro_.promise().current_value;
-    }
-    bool is_done()
-    {
-        return coro_.done();
-    }
-private:
-    promise_type::Handle coro_;
-};
+#include "bus/bus.h"
+#include "cpustate.h"
 
 class Mode
 {
 public:
-    virtual ModeTask execute(CPU &cpu, CPURegister &r) const = 0;
+    virtual Task execute(Bus &bus, CPUState &s) const = 0;
     virtual std::string_view get_id() const = 0;
 
-    bool step(CPU &cpu, CPURegister &r)
+    bool step(Bus &bus, CPUState &s) const
     {
-        static auto task = execute(cpu, r);
-
-        if (m_reset)
-        {
-            task = execute(cpu, r);
-            m_reset = false;
-        }
-        if (task.is_done())
-            return false;
+        static auto task = execute(bus, s);
 
         task();
-        return !task.is_done();
+
+        if (task.is_done())
+        {
+            task = execute(bus, s);
+            return false;
+        }
+
+        return true;
     }
     
     virtual ~Mode() = default;
-
-private:
-    bool m_reset = true;
 };
 
 class IMP final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "IMP"; }
 };
 
 class IMM final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "IMM"; }
 };
 
 class ZPG final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ZPG"; }
 };
 
 class ZPX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ZPX"; }
 };
 
 class ZPY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ZPY"; }
 };
 
 class ACC final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ACC"; }
 };
 
 class REL final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "REL"; }
 };
 
 class ABS final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ABS"; }
 };
 
 class ABX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ABX"; }
 };
 
 class ABY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "ABY"; }
 };
 
 class IND final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "IND"; }
 };
 
 class IDX final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "IDX"; }
 };
 
 class IDY final : public Mode
 {
 public:
-    ModeTask execute(CPU &cpu, CPURegister &r) const override;
+    Task execute(Bus &bus, CPUState &s) const override;
     std::string_view get_id() const override { return "IDY"; }
+};
+
+inline const Mode* const MODE_TABLE[12] =
+{
+    new IMP,
+    new IMM,
+    new ZPG,
+    new ZPX,
+    new ZPY,
+    new ACC,
+    new REL,
+    new ABS,
+    new ABX,
+    new ABY,
+    new IDX,
+    new IDY
 };

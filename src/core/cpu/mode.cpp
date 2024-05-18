@@ -1,255 +1,254 @@
 #include "mode.h"
-#include "cpu.h"
 
-ModeTask IMP::execute(CPU &cpu, CPURegister &r) const
+Task IMP::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /*A dummy read is performed*/
-    cpu.read(r.pc);
+    bus.cpu_read(s.r.pc);
     
     co_return 0;    
 }
 
-ModeTask ACC::execute(CPU &cpu, CPURegister &r) const
+Task ACC::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* A dummy read is performed, MDR is assigned to A */
-    cpu.read(r.pc);
-    r.mdr = r.a;
+    bus.cpu_read(s.r.pc);
+    s.r.mdr = s.r.a;
 
     co_return 0;
 }
 
-ModeTask IMM::execute(CPU &cpu, CPURegister &r) const
+Task IMM::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Fetch data from the next byte */
-    r.mdr = cpu.read(r.pc++);
+    s.r.mdr = bus.cpu_read(s.r.pc++);
 
     co_return 0;
 }
 
-ModeTask ZPG::execute(CPU &cpu, CPURegister &r) const
+Task ZPG::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Fetch address into MAR */
-    r.mar = cpu.read(r.pc++);
-    r.mar &= 0x00FFu;
+    s.r.mar = bus.cpu_read(s.r.pc++);
+    s.r.mar &= 0x00FFu;
     co_yield 0;
 
     /* Fetch data into MDR */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
 
     co_return 0;
 }
 
-ModeTask ZPX::execute(CPU &cpu, CPURegister &r) const
+Task ZPX::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Read address into MAR */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* Add X to MAR */
-    r.mar += r.x;
-    r.mar &= 0x00FFu;
+    s.r.mar += s.r.x;
+    s.r.mar &= 0x00FFu;
     co_yield 0;
 
     /* Read from effective address into MDR*/
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
 
     co_return 0;
 }
 
-ModeTask ZPY::execute(CPU &cpu, CPURegister &r) const
+Task ZPY::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Read address into MAR */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* Add Y to MAR */
-    r.mar += r.y;
-    r.mar &= 0x00FFu;
+    s.r.mar += s.r.y;
+    s.r.mar &= 0x00FFu;
     co_yield 0;
 
     /* Read from effective address into MDR*/
-    r.mdr = cpu.read(r.mar & 0x00FFu);
+    s.r.mdr = bus.cpu_read(s.r.mar & 0x00FFu);
 
     co_return 0;
 }
 
-ModeTask REL::execute(CPU &cpu, CPURegister &r) const
+Task REL::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Fetch offset into MDR */
-    r.mdr = cpu.read(r.pc++);
+    s.r.mdr = bus.cpu_read(s.r.pc++);
 
     co_return 0;
 }
 
-ModeTask ABS::execute(CPU &cpu, CPURegister &r) const
+Task ABS::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Low byte of address is fetched */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* High byte of address is fetched */
-    r.mar |= cpu.read(r.pc++) << 8u;
+    s.r.mar |= bus.cpu_read(s.r.pc++) << 8u;
 
-    if (cpu.get_instruction_id() != "JMP")
+    if (s.opcode == CPUOpcode::JMP)
         co_yield 0;
 
     /* Read from effective address */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
 
     co_return 0;
 }
 
-ModeTask ABX::execute(CPU &cpu, CPURegister &r) const
+Task ABX::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Low byte of address is fetched */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* High byte of address is fetched */
-    r.mar |= cpu.read(r.pc++) << 8u;
-    r.mar += r.x;
+    s.r.mar |= bus.cpu_read(s.r.pc++) << 8u;
+    s.r.mar += s.r.x;
     co_yield 0;
 
     /* Fix high address byte */
-    if (r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield 1;
 
     /* Read from effective address */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
 
     co_return 0;
 }
 
-ModeTask ABY::execute(CPU &cpu, CPURegister &r) const
+Task ABY::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Low byte of address is fetched */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* High byte of address is fetched */
-    r.mar |= cpu.read(r.pc++) << 8u;
-    r.mar += r.y;
+    s.r.mar |= bus.cpu_read(s.r.pc++) << 8u;
+    s.r.mar += s.r.y;
     co_yield 0;
 
     /* Fix high address byte */
-    if (r.mar >> 8u != r.mar - r.y >> 8u)
+    if (s.r.mar >> 8u != s.r.mar - s.r.y >> 8u)
         co_yield 1;
 
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
     
     co_return 0;
 }
 
-ModeTask IND::execute(CPU &cpu, CPURegister &r) const
+Task IND::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Low byte of address is fetched to MAR*/
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* High byte of address is fetched to MAR */
-    r.mar |= cpu.read(r.pc++) << 8u;
+    s.r.mar |= bus.cpu_read(s.r.pc++) << 8u;
     co_yield 0;
 
     /* Fetch low byte to MDR */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
     co_yield 0;
 
     /* Fetch high byte to MAR */
-    r.mar = cpu.read((r.mar & 0xFF00u) | ((r.mar + 1u) & 0x00FFu)) << 8u;
-    r.mar |= r.mdr;
+    s.r.mar = bus.cpu_read((s.r.mar & 0xFF00u) | ((s.r.mar + 1u) & 0x00FFu)) << 8u;
+    s.r.mar |= s.r.mdr;
 
     co_return 0;
 
 }
 
-ModeTask IDX::execute(CPU &cpu, CPURegister &r) const
+Task IDX::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Fetch pointer address to MAR */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* Add X to MAR */
-    r.mar += r.x;
+    s.r.mar += s.r.x;
     co_yield 0;
 
     /* Fetch low address byte */
-    r.mdr = cpu.read(r.mar & 0x00FFu);
+    s.r.mdr = bus.cpu_read(s.r.mar & 0x00FFu);
     co_yield 0;
 
     /* Fetch high address byte */
-    r.mar = cpu.read((r.mar + 1u) & 0x00FFu) << 8u;
-    r.mar |= r.mdr;
+    s.r.mar = bus.cpu_read((s.r.mar + 1u) & 0x00FFu) << 8u;
+    s.r.mar |= s.r.mdr;
     co_yield 0;
 
     /* Read from effective address */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
 
     co_return 0;
 }
 
-ModeTask IDY::execute(CPU &cpu, CPURegister &r) const
+Task IDY::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after fetching opcode */
     co_yield 0;
 
     /* Fetch pointer address to MAR */
-    r.mar = cpu.read(r.pc++);
+    s.r.mar = bus.cpu_read(s.r.pc++);
     co_yield 0;
 
     /* Fetch low address byte from zero page */
-    r.mdr = cpu.read(r.mar & 0x00FFu);
+    s.r.mdr = bus.cpu_read(s.r.mar & 0x00FFu);
     co_yield 0;
 
     /* Fetch high address byte from zero page */
-    r.mar = cpu.read((r.mar + 1u) & 0x00FFu) << 8u;
-    r.mar |= r.mdr;
+    s.r.mar = bus.cpu_read((s.r.mar + 1u) & 0x00FFu) << 8u;
+    s.r.mar |= s.r.mdr;
 
     /* Add Y to low byte of effective address */
-    r.mar += r.y;
+    s.r.mar += s.r.y;
     co_yield 0;
 
     /* *Fix* high byte of address (take extra cycle if page is crossed) */
-    if (r.mar >> 8u != r.mar - r.y >> 8u)
+    if (s.r.mar >> 8u != s.r.mar - s.r.y >> 8u)
         co_yield 1;
 
     /* Read from effective address */
-    r.mdr = cpu.read(r.mar);
+    s.r.mdr = bus.cpu_read(s.r.mar);
     
     co_return 0;
 }

@@ -1,36 +1,35 @@
 #include "opcode.h"
-#include "cpu.h"
 
-OpcodeTask ADC::execute(CPU &cpu, CPURegister &r) const
+Task ADC::execute(Bus &bus, CPUState &s) const
 {
-    uint16_t temp = r.a + r.mdr + r.test(CPURegister::StackRegister::C);
+    uint16_t temp = s.r.a + s.r.mdr + s.r.test(CPURegister::StackRegister::C);
 
-    r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
-    r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    r.set(CPURegister::StackRegister::V, ((temp ^ r.a) & ~(r.a ^ r.mdr)) & 0x0080u);
-    r.set(CPURegister::StackRegister::N, temp & 0x0080u);
+    s.r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
+    s.r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
+    s.r.set(CPURegister::StackRegister::V, ((temp ^ s.r.a) & ~(s.r.a ^ s.r.mdr)) & 0x0080u);
+    s.r.set(CPURegister::StackRegister::N, temp & 0x0080u);
 
     /* Wrte sum into A */
-    r.a = temp & 0x00FFu;
+    s.r.a = temp & 0x00FFu;
 
     co_return 0;
 }
 
-OpcodeTask AND::execute(CPU &cpu, CPURegister &r) const
+Task AND::execute(Bus &bus, CPUState &s) const
 {
     /* Perform AND with A and MDR and write to A */
-    r.a &= r.mdr;
-    r.set(CPURegister::StackRegister::Z, r.a == 0x00u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.a &= s.r.mdr;
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0x00u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask ASL::execute(CPU &cpu, CPURegister &r) const
+Task ASL::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1; /* Re read from effective address */
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -38,249 +37,249 @@ OpcodeTask ASL::execute(CPU &cpu, CPURegister &r) const
         /* Re-read from effective address */
         co_yield 0;
     }
-    else if (cpu.get_mode_id() != "ACC")
+    else if (s.mode != CPUMode::ACC)
         co_yield 0;
 
-    if (cpu.get_mode_id() != "ACC")
-        cpu.write(r.mdr, r.mar);
+    if (s.mode != CPUMode::ACC)
+        bus.cpu_write(s.r.mdr, s.r.mar);
 
-    r.set(CPURegister::StackRegister::C, r.mdr & 0x80u);
-    r.mdr <<= 1u;
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, s.r.mdr & 0x80u);
+    s.r.mdr <<= 1u;
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
 
-    if (cpu.get_mode_id() == "ACC")
+    if (s.mode == CPUMode::ACC)
     {
         /* A is set to MDR */
-        r.a = r.mdr;
+        s.r.a = s.r.mdr;
 
         co_return 0;
     }
 
     co_yield 0;
 
-    cpu.write(r.mdr, r.mar);
+    bus.cpu_write(s.r.mdr, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask BCC::execute(CPU &cpu, CPURegister &r) const
+Task BCC::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::C) == false)
+    if (s.r.test(CPURegister::StackRegister::C) == false)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BCS::execute(CPU &cpu, CPURegister &r) const
+Task BCS::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::C) == true)
+    if (s.r.test(CPURegister::StackRegister::C) == true)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BEQ::execute(CPU &cpu, CPURegister &r) const
+Task BEQ::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::Z) == true)
+    if (s.r.test(CPURegister::StackRegister::Z) == true)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BIT::execute(CPU &cpu, CPURegister &r) const
+Task BIT::execute(Bus &bus, CPUState &s) const
 {
     /* Set Z if result is zero */
-    r.set(CPURegister::StackRegister::Z, !(r.a & r.mdr));
+    s.r.set(CPURegister::StackRegister::Z, !(s.r.a & s.r.mdr));
 
     /* Set V to Bit 6 */
-    r.set(CPURegister::StackRegister::V, r.mdr & 0x40u);
+    s.r.set(CPURegister::StackRegister::V, s.r.mdr & 0x40u);
 
     /* Set N to Bit 7 */
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask BMI::execute(CPU &cpu, CPURegister &r) const
+Task BMI::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::N) == true)
+    if (s.r.test(CPURegister::StackRegister::N) == true)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BNE::execute(CPU &cpu, CPURegister &r) const
+Task BNE::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::Z) == false)
+    if (s.r.test(CPURegister::StackRegister::Z) == false)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BPL::execute(CPU &cpu, CPURegister &r) const
+Task BPL::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::N) == false)
+    if (s.r.test(CPURegister::StackRegister::N) == false)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BRK::execute(CPU &cpu, CPURegister &r) const
+Task BRK::execute(Bus &bus, CPUState &s) const
 {
     /* Set B Flag of SR to true, and push incremented PCH into the stack*/
-    cpu.write(r.pc >> 8u, 0x100u + r.sp--);
+    bus.cpu_write(s.r.pc >> 8u, 0x100u + s.r.sp--);
     co_yield 0;
 
     /* Push PCL into the stack*/
-    cpu.write(r.pc & 0x00FFu, 0x100u + r.sp--);
+    bus.cpu_write(s.r.pc & 0x00FFu, 0x100u + s.r.sp--);
     co_yield 0;
 
     /* Push P into the stack */
-    r.set(CPURegister::StackRegister::B, true);
-    cpu.write(r.sr, 0x100u + r.sp--);
-    r.set(CPURegister::StackRegister::B, false);
+    s.r.set(CPURegister::StackRegister::B, true);
+    bus.cpu_write(s.r.sr, 0x100u + s.r.sp--);
+    s.r.set(CPURegister::StackRegister::B, false);
     co_yield 0;
 
-    r.pc = cpu.read(0xFFFEu);
+    s.r.pc = bus.cpu_read(0xFFFEu);
     co_yield 0;
 
-    r.pc |= cpu.read(0xFFFFu) << 8u;
+    s.r.pc |= bus.cpu_read(0xFFFFu) << 8u;
 
     co_return 0;
 }
 
-OpcodeTask BVC::execute(CPU &cpu, CPURegister &r) const
+Task BVC::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::V) == false)
+    if (s.r.test(CPURegister::StackRegister::V) == false)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask BVS::execute(CPU &cpu, CPURegister &r) const
+Task BVS::execute(Bus &bus, CPUState &s) const
 {
-    if (r.test(CPURegister::StackRegister::V) == true)
+    if (s.r.test(CPURegister::StackRegister::V) == true)
     {
-        r.pc += static_cast<int8_t>(r.mdr);
+        s.r.pc += static_cast<int8_t>(s.r.mdr);
         co_yield 1;
 
-        if (r.pc >> 8u != r.pc - static_cast<int8_t>(r.mdr) >> 8u)
+        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
             co_yield 1;
     }
 
     co_return 0;
 }
 
-OpcodeTask CLC::execute(CPU &cpu, CPURegister &r) const
+Task CLC::execute(Bus &bus, CPUState &s) const
 {
     /* Clear Carry Flag */
-    r.set(CPURegister::StackRegister::C, false);
+    s.r.set(CPURegister::StackRegister::C, false);
 
     co_return 0;
 }
 
-OpcodeTask CLD::execute(CPU &cpu, CPURegister &r) const
+Task CLD::execute(Bus &bus, CPUState &s) const
 {
     /* Clear Decimal Flag */
-    r.set(CPURegister::StackRegister::D, false);
+    s.r.set(CPURegister::StackRegister::D, false);
 
     co_return 0;
 }
 
-OpcodeTask CLI::execute(CPU &cpu, CPURegister &r) const
+Task CLI::execute(Bus &bus, CPUState &s) const
 {
     /* Clear Interrupt Disabled Flag */
-    r.set(CPURegister::StackRegister::I, false);
+    s.r.set(CPURegister::StackRegister::I, false);
 
     co_return 0;
 }
 
-OpcodeTask CLV::execute(CPU &cpu, CPURegister &r) const
+Task CLV::execute(Bus &bus, CPUState &s) const
 {
     /* Clear Overflow Flag */
-    r.set(CPURegister::StackRegister::V, false);
+    s.r.set(CPURegister::StackRegister::V, false);
 
     co_return 0;
 }
 
-OpcodeTask CMP::execute(CPU &cpu, CPURegister &r) const
+Task CMP::execute(Bus &bus, CPUState &s) const
 {
     /* Set Flags */
-    r.set(CPURegister::StackRegister::C, r.a >= r.mdr);
-    r.set(CPURegister::StackRegister::Z, r.a == r.mdr);
-    r.set(CPURegister::StackRegister::N, (r.a - r.mdr) & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, s.r.a >= s.r.mdr);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == s.r.mdr);
+    s.r.set(CPURegister::StackRegister::N, (s.r.a - s.r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask CPX::execute(CPU &cpu, CPURegister &r) const
+Task CPX::execute(Bus &bus, CPUState &s) const
 {
     /* Set Flags */
-    r.set(CPURegister::StackRegister::C, r.x >= r.mdr);
-    r.set(CPURegister::StackRegister::Z, r.x == r.mdr);
-    r.set(CPURegister::StackRegister::N, (r.x - r.mdr) & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, s.r.x >= s.r.mdr);
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == s.r.mdr);
+    s.r.set(CPURegister::StackRegister::N, (s.r.x - s.r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask CPY::execute(CPU &cpu, CPURegister &r) const
+Task CPY::execute(Bus &bus, CPUState &s) const
 {
     /* Set Flags */
-    r.set(CPURegister::StackRegister::C, r.y >= r.mdr);
-    r.set(CPURegister::StackRegister::Z, r.y == r.mdr);
-    r.set(CPURegister::StackRegister::N, (r.y - r.mdr) & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, s.r.y >= s.r.mdr);
+    s.r.set(CPURegister::StackRegister::Z, s.r.y == s.r.mdr);
+    s.r.set(CPURegister::StackRegister::N, (s.r.y - s.r.mdr) & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask DEC::execute(CPU &cpu, CPURegister &r) const
+Task DEC::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -292,60 +291,60 @@ OpcodeTask DEC::execute(CPU &cpu, CPURegister &r) const
         co_yield 0;
     
     /* Decrement MDR */
-    r.mdr -= 1u;
+    s.r.mdr -= 1u;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
     co_yield 0;
 
     /* Write MDR at address MAR */
-    cpu.write(r.mdr, r.mar);
+    bus.cpu_write(s.r.mdr, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask DEX::execute(CPU &cpu, CPURegister &r) const
+Task DEX::execute(Bus &bus, CPUState &s) const
 {
     /* Decrement X */
-    r.x -= 1u;
+    s.r.x -= 1u;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.x == 0u);
-    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask DEY::execute(CPU &cpu, CPURegister &r) const
+Task DEY::execute(Bus &bus, CPUState &s) const
 {
     /* Decrement Y */
-    r.y -= 1u;
+    s.r.y -= 1u;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.y == 0u);
-    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask EOR::execute(CPU &cpu, CPURegister &r) const
+Task EOR::execute(Bus &bus, CPUState &s) const
 {
     /* Set A to A XOR MDR */
-    r.a ^= r.mdr;
+    s.r.a ^= s.r.mdr;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask INC::execute(CPU &cpu, CPURegister &r) const
+Task INC::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -357,100 +356,100 @@ OpcodeTask INC::execute(CPU &cpu, CPURegister &r) const
         co_yield 0;
 
     /* Increment MDR */
-    r.mdr += 1;
+    s.r.mdr += 1u;
 
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
     co_yield 0;
 
-    cpu.write(r.mdr, r.mar);
+    bus.cpu_write(s.r.mdr, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask INX::execute(CPU &cpu, CPURegister &r) const
+Task INX::execute(Bus &bus, CPUState &s) const
 {
     /* Increment X */
-    r.x += 1;
+    s.r.x += 1u;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.x == 0u);
-    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask INY::execute(CPU &cpu, CPURegister &r) const
+Task INY::execute(Bus &bus, CPUState &s) const
 {
     /* Increment Y */
-    r.y += 1;
+    s.r.y += 1u;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.y == 0u);
-    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask JMP::execute(CPU &cpu, CPURegister &r) const
+Task JMP::execute(Bus &bus, CPUState &s) const
 {
     /* Set PC to MAR */
-    r.pc = r.mar;
+    s.r.pc = s.r.mar;
 
     co_return 0;
 }
 
-OpcodeTask JSR::execute(CPU &cpu, CPURegister &r) const
+Task JSR::execute(Bus &bus, CPUState &s) const
 {
     /* Push Decremented PCH into stack */
-    cpu.write(--r.pc >> 8u, 0x100u + r.sp--);
+    bus.cpu_write(--s.r.pc >> 8u, 0x100u + s.r.sp--);
     co_yield 0;
 
     /* Push PCL into stack */
-    cpu.write(r.pc & 0x00FFu, 0x100u + r.sp--);
+    bus.cpu_write(s.r.pc & 0x00FFu, 0x100u + s.r.sp--);
     co_yield 0;
 
     /* Set PC to the Absolute Address */
-    r.pc = r.mar;
+    s.r.pc = s.r.mar;
 
     co_return 0;
 }
 
-OpcodeTask LDA::execute(CPU &cpu, CPURegister &r) const
+Task LDA::execute(Bus &bus, CPUState &s) const
 {
     /* Write contents of MDR to A */
-    r.a = r.mdr;
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.a = s.r.mdr;
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LDX::execute(CPU &cpu, CPURegister &r) const
+Task LDX::execute(Bus &bus, CPUState &s) const
 {
     /* Write contents of MDR to X */
-    r.x = r.mdr;
-    r.set(CPURegister::StackRegister::Z, r.x == 0u);
-    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
+    s.r.x = s.r.mdr;
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LDY::execute(CPU &cpu, CPURegister &r) const
+Task LDY::execute(Bus &bus, CPUState &s) const
 {
     /* Write contents of MDR to Y */
-    r.y = r.mdr;
-    r.set(CPURegister::StackRegister::Z, r.y == 0u);
-    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
+    s.r.y = s.r.mdr;
+    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask LSR::execute(CPU &cpu, CPURegister &r) const
+Task LSR::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -458,105 +457,105 @@ OpcodeTask LSR::execute(CPU &cpu, CPURegister &r) const
         /* Re-read from effective address */
         co_yield 0;
     }
-    else if (cpu.get_mode_id() != "ACC")
+    else if (s.mode != CPUMode::ACC)
         co_yield 0;
 
-    r.set(CPURegister::StackRegister::C, r.mdr & 0x01u);
-    r.mdr >>= 1u;
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, s.r.mdr & 0x01u);
+    s.r.mdr >>= 1u;
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
 
-    if (cpu.get_mode_id() != "ACC")
+    if (s.mode != CPUMode::ACC)
     {
         co_yield 0;
 
-        cpu.write(r.mdr, r.mar);
+        bus.cpu_write(s.r.mdr, s.r.mar);
     }
     else
-        r.a = r.mdr;
+        s.r.a = s.r.mdr;
 
     co_return 0;
 }
 
-OpcodeTask NOP::execute(CPU &cpu, CPURegister &r) const
+Task NOP::execute(Bus &bus, CPUState &s) const
 {
     /* Do Nothing */
     co_return 0;
 }
 
-OpcodeTask ORA::execute(CPU &cpu, CPURegister &r) const
+Task ORA::execute(Bus &bus, CPUState &s) const
 {
     /* Set A = A | MDR */
-    r.a |= r.mdr; /* Push A into the stack */
+    s.r.a |= s.r.mdr; /* Push A into the stack */
 
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask PHA::execute(CPU &cpu, CPURegister &r) const
+Task PHA::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Push A into the stack */
-    cpu.write(r.a, 0x100u + r.sp--);
+    bus.cpu_write(s.r.a, 0x100u + s.r.sp--);
     co_return 0;
 }
 
-OpcodeTask PHP::execute(CPU &cpu, CPURegister &r) const
+Task PHP::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Push P into the stack */
-    cpu.write(r.sr, 0x100u + r.sp--);
+    bus.cpu_write(s.r.sr, 0x100u + s.r.sp--);
     co_return 0;
 }
 
-OpcodeTask PLA::execute(CPU &cpu, CPURegister &r) const
+Task PLA::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Increment SP */
-    ++r.sp;
+    ++s.r.sp;
     co_yield 0;
 
     /* Pull A from stack */
-    r.a = cpu.read(0x100u + r.sp);
+    s.r.a = bus.cpu_read(0x100u + s.r.sp);
 
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask PLP::execute(CPU &cpu, CPURegister &r) const
+Task PLP::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Increment SP */
-    ++r.sp;
+    ++s.r.sp;
     co_yield 0;
 
     /* Pull P from stack */
-    r.mdr = r.sr;
-    r.sr = cpu.read(0x100u + r.sp);
+    s.r.mdr = s.r.sr;
+    s.r.sr = bus.cpu_read(0x100u + s.r.sp);
 
-    r.set(CPURegister::StackRegister::X, r.mdr & 0x20u);
-    r.set(CPURegister::StackRegister::B, r.mdr & 0x10u);
+    s.r.set(CPURegister::StackRegister::X, s.r.mdr & 0x20u);
+    s.r.set(CPURegister::StackRegister::B, s.r.mdr & 0x10u);
 
     co_return 0;
 }
 
-OpcodeTask ROL::execute(CPU &cpu, CPURegister &r) const
+Task ROL::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1; /* Re-read from effective address */
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -564,35 +563,35 @@ OpcodeTask ROL::execute(CPU &cpu, CPURegister &r) const
         /* Re-read from effective address */
         co_yield 0;
     }
-    else if (cpu.get_mode_id() != "ACC")
+    else if (s.mode != CPUMode::ACC)
         co_yield 0;
 
-    auto C = r.mdr >> 7u;
+    auto C = s.r.mdr >> 7u;
 
-    r.mdr = r.mdr << 1u | r.test(CPURegister::StackRegister::C);
+    s.r.mdr = s.r.mdr << 1u | s.r.test(CPURegister::StackRegister::C);
 
-    r.set(CPURegister::StackRegister::C, C);
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr & 0x80u);
+    s.r.set(CPURegister::StackRegister::C, C);
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
 
-    if (cpu.get_mode_id() != "ACC")
+    if (s.mode != CPUMode::ACC)
     {
         co_yield 0;
 
         /* Write to effective address */
-        cpu.write(r.mdr, r.mar);
+        bus.cpu_write(s.r.mdr, s.r.mar);
     }
     else
-        r.a = r.mdr;
+        s.r.a = s.r.mdr;
 
     co_return 0;
 }
 
-OpcodeTask ROR::execute(CPU &cpu, CPURegister &r) const
+Task ROR::execute(Bus &bus, CPUState &s) const
 {
-    if (cpu.get_mode_id() == "ABX" && r.mar >> 8u != r.mar - r.x >> 8u)
+    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
         co_yield -1;
-    else if (cpu.get_mode_id() == "ABX" && r.mar >> 8u == r.mar - r.x >> 8u)
+    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
     {
         /* Fix high address byte */
         co_yield 0;
@@ -600,215 +599,215 @@ OpcodeTask ROR::execute(CPU &cpu, CPURegister &r) const
         /* Re-read from effective address */
         co_yield 0;
     }
-    else if (cpu.get_mode_id() != "ACC")
+    else if (s.mode != CPUMode::ACC)
         co_yield 0;
 
-    auto C = r.mdr & 0x0001u;
+    auto C = s.r.mdr & 0x0001u;
 
-    r.mdr = r.mdr >> 1u | r.test(CPURegister::StackRegister::C) << 7u;
+    s.r.mdr = s.r.mdr >> 1u | s.r.test(CPURegister::StackRegister::C) << 7u;
 
-    r.set(CPURegister::StackRegister::C, C);
-    r.set(CPURegister::StackRegister::Z, r.mdr == 0u);
-    r.set(CPURegister::StackRegister::N, r.mdr >> 7u);
+    s.r.set(CPURegister::StackRegister::C, C);
+    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.mdr >> 7u);
 
-    if (cpu.get_mode_id() != "ACC")
+    if (s.mode != CPUMode::ACC)
     {
         co_yield 0;
 
         /* Write to effective address */
-        cpu.write(r.mdr, r.mar);
+        bus.cpu_write(s.r.mdr, s.r.mar);
     }
     else
-        r.a = r.mdr;
+        s.r.a = s.r.mdr;
 
     co_return 0;
 }
 
-OpcodeTask RTI::execute(CPU &cpu, CPURegister &r) const
+Task RTI::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Increment Stack Pointer */
-    ++r.sp;
+    ++s.r.sp;
     co_yield 0;
 
     /* Pull P from the Stack */
-    r.mdr = r.sr;
-    r.sr = cpu.read(0x100u + r.sp);
+    s.r.mdr = s.r.sr;
+    s.r.sr = bus.cpu_read(0x100u + s.r.sp);
 
-    r.set(CPURegister::StackRegister::X, r.mdr & 0x20u);
-    r.set(CPURegister::StackRegister::B, r.mdr & 0x10u);
+    s.r.set(CPURegister::StackRegister::X, s.r.mdr & 0x20u);
+    s.r.set(CPURegister::StackRegister::B, s.r.mdr & 0x10u);
     co_yield 0;
 
     /* Pull PCL from the Stack */
-    r.pc = cpu.read(0x100u + ++r.sp);
+    s.r.pc = bus.cpu_read(0x100u + ++s.r.sp);
     co_yield 0;
 
     /* Pull PCH from the Stack */
-    r.pc |= cpu.read(0x100u + ++r.sp) << 8u;
+    s.r.pc |= bus.cpu_read(0x100u + ++s.r.sp) << 8u;
 
     co_return 0;
 }
 
-OpcodeTask RTS::execute(CPU &cpu, CPURegister &r) const
+Task RTS::execute(Bus &bus, CPUState &s) const
 {
     /* Tick after dummy read */
     co_yield 0;
 
     /* Increment SP */
-    r.sp++;
+    s.r.sp++;
     co_yield 0;
 
     /* Pull PCL from stack */
-    r.pc = cpu.read(0x100u + r.sp++);
+    s.r.pc = bus.cpu_read(0x100u + s.r.sp++);
     co_yield 0;
 
     /* Pull PCH from stack */
-    r.pc |= cpu.read(0x100u + r.sp) << 8u;
+    s.r.pc |= bus.cpu_read(0x100u + s.r.sp) << 8u;
     co_yield 0;
 
     /* Increment PC */
-    ++r.pc;
+    ++s.r.pc;
     co_return 0;
 }
 
-OpcodeTask SBC::execute(CPU &cpu, CPURegister &r) const
+Task SBC::execute(Bus &bus, CPUState &s) const
 {
     /* Invert bits of MDR */
-    uint16_t value = r.mdr ^ 0x00FFu;
+    uint16_t value = s.r.mdr ^ 0x00FFu;
 
-    uint16_t temp = r.a + value + r.test(CPURegister::StackRegister::C);
+    uint16_t temp = s.r.a + value + s.r.test(CPURegister::StackRegister::C);
 
-    r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
-    r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    r.set(CPURegister::StackRegister::V, ((temp ^ r.a) & (r.a ^ r.mdr)) & 0x0080u);
-    r.set(CPURegister::StackRegister::N, temp & 0x0080u);
+    s.r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
+    s.r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
+    s.r.set(CPURegister::StackRegister::V, ((temp ^ s.r.a) & (s.r.a ^ s.r.mdr)) & 0x0080u);
+    s.r.set(CPURegister::StackRegister::N, temp & 0x0080u);
 
-    r.a = temp & 0x00FFu;
+    s.r.a = temp & 0x00FFu;
 
     co_return 0;
 }
 
-OpcodeTask SEC::execute(CPU &cpu, CPURegister &r) const
+Task SEC::execute(Bus &bus, CPUState &s) const
 {
     /* Set Carry Flag to True */
-    r.set(CPURegister::StackRegister::C, true);
+    s.r.set(CPURegister::StackRegister::C, true);
 
     co_return 0;
 }
 
-OpcodeTask SED::execute(CPU &cpu, CPURegister &r) const
+Task SED::execute(Bus &bus, CPUState &s) const
 {
     /* Set Decimal Flag to True */
-    r.set(CPURegister::StackRegister::D, true);
+    s.r.set(CPURegister::StackRegister::D, true);
 
     co_return 0;
 }
 
-OpcodeTask SEI::execute(CPU &cpu, CPURegister &r) const
+Task SEI::execute(Bus &bus, CPUState &s) const
 {
     /* Set Interrupt Disable Flag to True */
-    r.set(CPURegister::StackRegister::I, true);
+    s.r.set(CPURegister::StackRegister::I, true);
 
     co_return 0;
 }
 
-OpcodeTask STA::execute(CPU &cpu, CPURegister &r) const
+Task STA::execute(Bus &bus, CPUState &s) const
 {
     /* Take an extra cycle if high byte was not fixed */
-    if (cpu.get_mode_id() == "IDY" && (r.mar >> 8u == r.mar - r.y >> 8u))
+    if (s.mode == CPUMode::IDY && (s.r.mar >> 8u == s.r.mar - s.r.y >> 8u))
         co_yield -1;
-    else if (cpu.get_mode_id() == "ABX" && (r.mar >> 8u == r.mar - r.x >> 8u))
+    else if (s.mode == CPUMode::ABX && (s.r.mar >> 8u == s.r.mar - s.r.x >> 8u))
         co_yield -1;
-    else if (cpu.get_mode_id() == "ABY" && (r.mar >> 8u == r.mar - r.y >> 8u))
+    else if (s.mode == CPUMode::ABY && (s.r.mar >> 8u == s.r.mar - s.r.y >> 8u))
         co_yield -1;
 
     /* Store A at MAR */
-    cpu.write(r.a, r.mar);
+    bus.cpu_write(s.r.a, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask STX::execute(CPU &cpu, CPURegister &r) const
+Task STX::execute(Bus &bus, CPUState &s) const
 {
     /* Store X at MAR */
-    cpu.write(r.x, r.mar);
+    bus.cpu_write(s.r.x, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask STY::execute(CPU &cpu, CPURegister &r) const
+Task STY::execute(Bus &bus, CPUState &s) const
 {
     /* Store X at MAR */
-    cpu.write(r.y, r.mar);
+    bus.cpu_write(s.r.y, s.r.mar);
 
     co_return 0;
 }
 
-OpcodeTask TAX::execute(CPU &cpu, CPURegister &r) const
+Task TAX::execute(Bus &bus, CPUState &s) const
 {
     /* Transfer A to X */
-    r.x = r.a;
+    s.r.x = s.r.a;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.x == 0u);
-    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TAY::execute(CPU &cpu, CPURegister &r) const
+Task TAY::execute(Bus &bus, CPUState &s) const
 {
     /* Transfer A to Y */
-    r.y = r.a;
+    s.r.y = s.r.a;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.y == 0u);
-    r.set(CPURegister::StackRegister::N, r.y & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TSX::execute(CPU &cpu, CPURegister &r) const
+Task TSX::execute(Bus &bus, CPUState &s) const
 {
     /* Transfer SP to X */
-    r.x = r.sp;
+    s.r.x = s.r.sp;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.x == 0u);
-    r.set(CPURegister::StackRegister::N, r.x & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TXA::execute(CPU &cpu, CPURegister &r) const
+Task TXA::execute(Bus &bus, CPUState &s) const
 {
     /* Transfer X to A */
-    r.a = r.x;
+    s.r.a = s.r.x;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }
 
-OpcodeTask TXS::execute(CPU &cpu, CPURegister &r) const
+Task TXS::execute(Bus &bus, CPUState &s) const
 {
     /* Transfer X to SP */
-    r.sp = r.x;
+    s.r.sp = s.r.x;
 
     co_return 0;
 }
 
-OpcodeTask TYA::execute(CPU &cpu, CPURegister &r) const
+Task TYA::execute(Bus &bus, CPUState &s) const
 {
-    r.a = r.y;
+    s.r.a = s.r.y;
 
     /* Set Flags */
-    r.set(CPURegister::StackRegister::Z, r.a == 0u);
-    r.set(CPURegister::StackRegister::N, r.a & 0x80u);
+    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
+    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
 
     co_return 0;
 }

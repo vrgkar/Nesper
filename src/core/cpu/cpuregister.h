@@ -29,7 +29,8 @@ struct CPURegister
     uint8_t a;
 
     /* Index Registers */
-    uint8_t x, y;
+    uint8_t x;
+    uint8_t y;
 
     /* Program Counter */
     uint16_t pc;
