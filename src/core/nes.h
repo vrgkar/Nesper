@@ -6,11 +6,11 @@
 #include "ram/ram.h"
 #include "mapper/mapper.h"
 
-class Nesper
+class NES
 {
 public:
-    Nesper() = delete;
-    void operator=(const Nesper&) = delete;
+    NES() = delete;
+    void operator=(const NES&) = delete;
 
 private:
 
