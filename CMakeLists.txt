@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.25)
 
 project(
 Nesper
@@ -7,7 +7,7 @@ LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -17,4 +17,4 @@ include(${wxWidgets_USE_FILE})
 add_subdirectory(src bin)
 
 add_executable(Nesper src/main.cpp)
-target_link_libraries(Nesper core gui)
+target_link_libraries(Nesper PUBLIC core gui)

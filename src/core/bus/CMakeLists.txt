@@ -1,2 +1,2 @@
 add_library(bus bus.cpp)
-target_link_libraries(bus PUBLIC cpu ppu apu ram cartridge)
+target_link_libraries(bus PRIVATE cpu ppu apu ram mapper)

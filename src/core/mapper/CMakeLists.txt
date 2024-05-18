@@ -1,7 +1,7 @@
-add_library(cartridge 
-    cartridge.cpp 
-    memory/memory.cpp 
-    mapper/mapper.cpp 
-    mapper/mapper_factory.cpp
-    mapper/mapper000.cpp)
-target_link_libraries(cartridge PUBLIC system)
+add_library(mapper 
+    mapper.cpp 
+    mapper_factory.cpp
+    mapper000.cpp
+    mapper001.cpp
+)
+
