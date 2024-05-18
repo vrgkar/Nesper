@@ -4,7 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include "component.h"
+#include "common/component.h"
 #include "common/rom.h"
 
 class Mapper : public Component
@@ -15,6 +15,11 @@ public:
 
     /* Writes to memory, and returns whether it wrote the value at the given address */
     virtual bool write(uint8_t byte, uint16_t addr) = 0;
+
+    void broadcast(Event event) override;
+
+    void service(Event event) override;
+
 
     virtual std::string_view get_id() const = 0;
 

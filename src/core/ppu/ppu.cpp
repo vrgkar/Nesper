@@ -1,6 +1,6 @@
 #include "ppu.h"
 
-bool PPU::fetch(uint8_t &byte, uint16_t addr)
+bool PPU::read(uint8_t &byte, uint16_t addr)
 {
     /*
     Reading any readable PPU port fills the PPU Latch
@@ -49,7 +49,7 @@ bool PPU::fetch(uint8_t &byte, uint16_t addr)
     return true;
 }
 
-bool PPU::commit(uint8_t byte, uint16_t addr)
+bool PPU::write(uint8_t byte, uint16_t addr)
 {
     /* Writes to any PPU port will also fill the bits in the latch */
 
@@ -94,6 +94,11 @@ bool PPU::commit(uint8_t byte, uint16_t addr)
 
     m_r.ppulatch = byte;
     return true;
+}
+
+void PPU::broadcast(Event event)
+{
+
 }
 
 void PPU::service(Event event)

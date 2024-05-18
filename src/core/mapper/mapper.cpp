@@ -1,5 +1,15 @@
 #include "mapper.h"
 
+void Mapper::broadcast(Event event)
+{
+
+}
+
+void Mapper::service(Event event)
+{
+
+}
+
 void Mapper::load_rom(const ROM &rom)
 {
     m_prgrom = rom.prgrom;

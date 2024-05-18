@@ -1,6 +1,6 @@
 #include "ram.h"
 
-bool RAM::fetch(uint8_t &byte, uint16_t addr)
+bool RAM::read(uint8_t &byte, uint16_t addr)
 {
     if (addr < 0x2000u)
         byte = m_ram[addr % m_ram.size()];
@@ -10,7 +10,7 @@ bool RAM::fetch(uint8_t &byte, uint16_t addr)
     return true;
 }
 
-bool RAM::commit(uint8_t byte, uint16_t addr)
+bool RAM::write(uint8_t byte, uint16_t addr)
 {
     if (addr < 0x2000u)
         m_ram[addr % m_ram.size()] = byte;
@@ -18,4 +18,14 @@ bool RAM::commit(uint8_t byte, uint16_t addr)
         return false;
     
     return true;
+}
+
+void RAM::broadcast(Event event)
+{
+
+}
+
+void RAM::service(Event event)
+{
+
 }

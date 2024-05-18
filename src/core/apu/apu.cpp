@@ -1,6 +1,6 @@
 #include "apu.h"
 
-bool APU::fetch(uint8_t &byte, uint16_t addr)
+bool APU::read(uint8_t &byte, uint16_t addr)
 {
     if (0x4000u <= addr && addr < 0x4020u)
         ;
@@ -10,7 +10,7 @@ bool APU::fetch(uint8_t &byte, uint16_t addr)
     return true;
 }
 
-bool APU::commit(uint8_t byte, uint16_t addr)
+bool APU::write(uint8_t byte, uint16_t addr)
 {
     if (0x4000u <= addr && addr < 0x4020u)
         ;
@@ -18,6 +18,11 @@ bool APU::commit(uint8_t byte, uint16_t addr)
         return false;
 
     return true;
+}
+
+void APU::broadcast(Event event)
+{
+    
 }
 
 void APU::service(Event event)

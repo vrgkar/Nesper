@@ -1,23 +1,24 @@
 #pragma once
 
-#include <array>
-
-#include "component.h"
-#include "ppuregister.h"
+#include "common/pch.h"
+#include "common/component.h"
 
 #include "bus/bus.h"
+
+#include "ppuregister.h"
 
 class PPU final : public Component
 {
 public:
-    bool fetch(uint8_t &byte, uint16_t addr) override;
-    bool commit(uint8_t byte, uint16_t addr) override;
+    bool read(uint8_t &byte, uint16_t addr) override;
+    bool write(uint8_t byte, uint16_t addr) override;
 
+    void broadcast(Event event) override;
     void service(Event event) override;
 
     void step();
 
-    std::string_view get_id() override { return "PPU"; }
+    std::string_view get_id() const override { return "PPU"; }
 
 private:
 
