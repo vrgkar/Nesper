@@ -5,7 +5,7 @@
 
 #include "bus/bus.h"
 
-#include "ppuregister.h"
+#include "ppustate.h"
 
 class PPU final : public Component
 {
@@ -25,8 +25,8 @@ private:
     /* Common Bus */
     Bus *bus = nullptr;
 
-    /* Internal PPU Registers */
-    PPURegister m_r;
+    /* Internal PPU State */
+    PPUState m_state;
 
     /* Internal OAM Memory */
     std::array<uint8_t, 64*4> m_oam;

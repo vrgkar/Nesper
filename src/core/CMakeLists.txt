@@ -8,5 +8,5 @@ add_subdirectory(ppu)
 add_subdirectory(ram)
 add_subdirectory(utils)
 
-target_include_directories(core PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(core PUBLIC apu bus mapper cpu ppu ram utils)

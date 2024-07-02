@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include "common/pch.h"
 
 struct PPURegister
 {

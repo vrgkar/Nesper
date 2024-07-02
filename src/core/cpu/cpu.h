@@ -25,6 +25,8 @@ public:
 
     /* CPU Functions */
     void step();
+    void step_instruction();
+    std::string get_instr_disassembly();
 
     void set_bus(Bus *bus) { m_bus = bus; }
 
@@ -32,9 +34,11 @@ private:
     void fetch();
     void decode();
     void execute();
+    void interrupt();
 
 private:
 
     CPUState m_state;
     Bus *m_bus = nullptr;
+    std::string m_instr;
 };

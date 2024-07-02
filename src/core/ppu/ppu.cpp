@@ -8,39 +8,39 @@ bool PPU::read(uint8_t &byte, uint16_t addr)
     */
     if (addr == 0x4014u)
     {
-        byte = m_r.ppulatch;
+        byte = m_state.r.ppulatch;
         return true;
     }
 
     switch (addr % 0x8u)
     {
     case 0x0u:
-        byte = m_r.ppulatch;
+        byte = m_state.r.ppulatch;
         break;
     case 0x1u:
-        byte = m_r.ppulatch;
+        byte = m_state.r.ppulatch;
         break;
     case 0x2u:
-        byte = m_r.ppustatus;
-        m_r.ppulatch = byte;
+        byte = m_state.r.ppustatus;
+        m_state.r.ppulatch = byte;
         break;
     case 0x3u:
-        byte = m_r.ppulatch;
+        byte = m_state.r.ppulatch;
         break;
     case 0x4u:
-        byte = m_r.oamdata;
-        m_r.ppulatch = byte;
+        byte = m_state.r.oamdata;
+        m_state.r.ppulatch = byte;
         break;
     case 0x5u:
-        byte = m_r.ppuscroll;
-        m_r.ppulatch = byte;
+        byte = m_state.r.ppuscroll;
+        m_state.r.ppulatch = byte;
         break;
     case 0x6u:
-        byte = m_r.ppulatch;
+        byte = m_state.r.ppulatch;
         break;
     case 0x7u:
-        byte = m_r.ppudata;
-        m_r.ppulatch = byte;
+        byte = m_state.r.ppudata;
+        m_state.r.ppulatch = byte;
         break;
     default:
         return false;
@@ -55,8 +55,8 @@ bool PPU::write(uint8_t byte, uint16_t addr)
 
     if (addr == 0x4014u)
     {
-        m_r.oamdma = byte;
-        m_r.ppulatch = byte;
+        m_state.r.oamdma = byte;
+        m_state.r.ppulatch = byte;
 
         // Broadcast OAMDMA 
 
@@ -66,33 +66,33 @@ bool PPU::write(uint8_t byte, uint16_t addr)
     switch (addr % 0x8u)
     {
     case 0x0u:
-        m_r.ppuctrl = byte;
+        m_state.r.ppuctrl = byte;
         break;
     case 0x1u:
-        m_r.ppumask = byte;
+        m_state.r.ppumask = byte;
         break;
     case 0x2u:
         break;
     case 0x3u:
-        m_r.oamaddr = byte;
+        m_state.r.oamaddr = byte;
         break;
     case 0x4u:
-        m_r.oamdata = byte;
+        m_state.r.oamdata = byte;
         break;
     case 0x5u:
-        m_r.ppuscroll = byte;
+        m_state.r.ppuscroll = byte;
         break;
     case 0x6u:
-        m_r.ppuaddr = byte;
+        m_state.r.ppuaddr = byte;
         break;
     case 0x7u:
-        m_r.ppudata = byte;
+        m_state.r.ppudata = byte;
         break;
     default:
         return false;
     }
 
-    m_r.ppulatch = byte;
+    m_state.r.ppulatch = byte;
     return true;
 }
 

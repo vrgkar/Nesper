@@ -81,18 +81,27 @@ enum class CPUOpcode
 
 enum class CPUProcess
 {
-    IDLE,
     FETCH,
     DECODE,
     EXECUTE,
+    INTERRUPT
+};
+
+enum class CPUInterrupt
+{
+    RST,
+    BRK,
+    IRQ,
+    NMI
 };
 
 struct CPUState
 {
-    CPUProcess process = CPUProcess::IDLE;
-
     CPUOpcode opcode = CPUOpcode::NOP;
     CPUMode mode = CPUMode::IMP;
+    
+    CPUProcess process = CPUProcess::INTERRUPT;
+    CPUInterrupt interrupt = CPUInterrupt::RST;
 
     CPURegister r;
 

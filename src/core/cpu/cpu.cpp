@@ -20,7 +20,6 @@ void CPU::broadcast(Event event)
 
 }
 
-
 void CPU::step()
 {
     if (m_state.process == CPUProcess::FETCH)
@@ -31,10 +30,26 @@ void CPU::step()
 
     else if (m_state.process == CPUProcess::EXECUTE)
         execute();
+
+    else if (m_state.process == CPUProcess::INTERRUPT)
+        interrupt();
+}
+
+void CPU::step_instruction()
+{
+    do
+        step();
+    while (m_state.process != CPUProcess::FETCH);
+}
+
+std::string CPU::get_instr_disassembly()
+{
+    return m_instr;
 }
 
 void CPU::fetch()
 {
+    m_instr.clear();
     m_state.op = m_bus->cpu_read(m_state.r.pc++);
     m_state.process = CPUProcess::DECODE;
 }
@@ -54,11 +69,21 @@ void CPU::execute()
         if (!OPCODE_TABLE[std::to_underlying(m_state.opcode)]->step(*m_bus, m_state))
             ++flag;
 
+    m_instr = std::format(" {:x} {:x}", m_state.r.mar, m_state.r.mdr);
+
     if (flag == 2)
     {
         flag = 0;
         m_state.process = CPUProcess::FETCH;
     }
+}
+
+void CPU::interrupt()
+{
+    if (!INTERRUPT_TABLE[std::to_underlying(m_state.interrupt)]->step(*m_bus, m_state))
+        return;
+
+    m_state.process = CPUProcess::FETCH;
 }
 
 void CPU::decode()
@@ -1090,5 +1115,6 @@ void CPU::decode()
         break;
     }
 
+    m_instr += OPCODE_TABLE[std::to_underlying(m_state.opcode)]->get_id();
     m_state.process = CPUProcess::EXECUTE;
 }
