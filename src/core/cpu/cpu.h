@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common/pch.h"
+#include "common/defs.h"
 #include "common/component.h"
 
 #include "bus/bus.h"

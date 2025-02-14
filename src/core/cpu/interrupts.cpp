@@ -2,27 +2,32 @@
 
 bool CPU::RST()
 {
-    co_yield 0;
-    co_yield 0;
-    co_yield 0;
-    co_yield 0;
-    co_yield 0;
+    INIT_SEGMENTS
+
+    START_SEGMENT(1)
+
+    NEXT_SEGMENT(2)
+    NEXT_SEGMENT(3)
+    NEXT_SEGMENT(4)
+    NEXT_SEGMENT(5)
+    NEXT_SEGMENT(6)
     
     s.r.pc = bus.cpu_read(0xFFFCu);
 
-    co_yield 0;
+    END_SEGMENT
 
     s.r.pc |= bus.cpu_read(0xFFFDu) << 8u;
 
-    co_return 0;
+    FREE_SEGMENTS
+    return true;
 }
 
 bool CPU::IRQ()
 {
-    co_return 0;
+    return true;
 }
 
 bool CPU::NMI()
 {
-    co_return 0;
+    return true;
 }
