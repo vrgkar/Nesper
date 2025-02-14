@@ -6,9 +6,6 @@
 #include "bus/bus.h"
 
 #include "cpustate.h"
-#include "opcode.h"
-#include "mode.h"
-#include "interrupt.h"
 
 class CPU final : public Component
 {
