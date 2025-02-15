@@ -2,15 +2,15 @@
 
 bool CPU::ADC()
 {
-    uint16_t temp = s.r.a + s.r.mdr + s.r.test(CPURegister::StackRegister::C);
+    uint16_t temp = m_r.a + m_r.mdr + m_r.test(Register::Status::C);
 
-    s.r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
-    s.r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    s.r.set(CPURegister::StackRegister::V, ((temp ^ s.r.a) & ~(s.r.a ^ s.r.mdr)) & 0x0080u);
-    s.r.set(CPURegister::StackRegister::N, temp & 0x0080u);
+    m_r.set(Register::Status::C, temp > 0x00FFu);
+    m_r.set(Register::Status::Z, (temp & 0x00FFu) == 0u);
+    m_r.set(Register::Status::V, ((temp ^ m_r.a) & ~(m_r.a ^ m_r.mdr)) & 0x0080u);
+    m_r.set(Register::Status::N, temp & 0x0080u);
 
     /* Wrte sum into A */
-    s.r.a = temp & 0x00FFu;
+    m_r.a = temp & 0x00FFu;
 
     return true;
 }
@@ -18,9 +18,9 @@ bool CPU::ADC()
 bool CPU::AND()
 {
     /* Perform AND with A and MDR and write to A */
-    s.r.a &= s.r.mdr;
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0x00u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.a &= m_r.mdr;
+    m_r.set(Register::Status::Z, m_r.a == 0x00u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }
@@ -29,9 +29,9 @@ bool CPU::ASL()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1) /* Re read from effective address */
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -39,23 +39,23 @@ bool CPU::ASL()
         /* Re-read from effective address */
         BREAK_SEGMENT(3)
     }
-    else if (s.mode != CPUMode::ACC)
+    else if (m_mode != Mode::ACC)
         BREAK_SEGMENT(4)
 
     START_SEGMENT(5)
 
-    if (s.mode != CPUMode::ACC)
-        bus.cpu_write(s.r.mdr, s.r.mar);
+    if (m_mode != Mode::ACC)
+        m_bus->cpu_write(m_r.mdr, m_r.mar);
 
-    s.r.set(CPURegister::StackRegister::C, s.r.mdr & 0x80u);
-    s.r.mdr <<= 1u;
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::C, m_r.mdr & 0x80u);
+    m_r.mdr <<= 1u;
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
 
-    if (s.mode == CPUMode::ACC)
+    if (m_mode == Mode::ACC)
     {
         /* A is set to MDR */
-        s.r.a = s.r.mdr;
+        m_r.a = m_r.mdr;
 
         FREE_SEGMENTS
         return true;
@@ -63,7 +63,7 @@ bool CPU::ASL()
 
     END_SEGMENT
 
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -73,12 +73,12 @@ bool CPU::BCC()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::C) == false)
+    if (m_r.test(Register::Status::C) == false)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -90,12 +90,12 @@ bool CPU::BCS()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::C) == true)
+    if (m_r.test(Register::Status::C) == true)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -107,12 +107,12 @@ bool CPU::BEQ()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::Z) == true)
+    if (m_r.test(Register::Status::Z) == true)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -123,13 +123,13 @@ bool CPU::BEQ()
 bool CPU::BIT()
 {
     /* Set Z if result is zero */
-    s.r.set(CPURegister::StackRegister::Z, !(s.r.a & s.r.mdr));
+    m_r.set(Register::Status::Z, !(m_r.a & m_r.mdr));
 
     /* Set V to Bit 6 */
-    s.r.set(CPURegister::StackRegister::V, s.r.mdr & 0x40u);
+    m_r.set(Register::Status::V, m_r.mdr & 0x40u);
 
     /* Set N to Bit 7 */
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
 
     return true;
 }
@@ -138,12 +138,12 @@ bool CPU::BMI()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::N) == true)
+    if (m_r.test(Register::Status::N) == true)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -155,12 +155,12 @@ bool CPU::BNE()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::Z) == false)
+    if (m_r.test(Register::Status::Z) == false)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -172,12 +172,12 @@ bool CPU::BPL()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::N) == false)
+    if (m_r.test(Register::Status::N) == false)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -189,30 +189,31 @@ bool CPU::BRK()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Set B Flag of SR to true, and push incremented PCH into the stack*/
-    bus.cpu_write(s.r.pc >> 8u, 0x100u + s.r.sp--);
+    m_bus->cpu_write(m_r.pc >> 8u, 0x100u + m_r.sp--);
 
     NEXT_SEGMENT(2)
 
     /* Push PCL into the stack*/
-    bus.cpu_write(s.r.pc & 0x00FFu, 0x100u + s.r.sp--);
+    m_bus->cpu_write(m_r.pc & 0x00FFu, 0x100u + m_r.sp--);
 
     NEXT_SEGMENT(3)
 
     /* Push P into the stack */
-    s.r.set(CPURegister::StackRegister::B, true);
-    bus.cpu_write(s.r.sr, 0x100u + s.r.sp--);
-    s.r.set(CPURegister::StackRegister::B, false);
+    m_r.set(Register::Status::B, true);
+    m_bus->cpu_write(m_r.sr, 0x100u + m_r.sp--);
+    m_r.set(Register::Status::B, false);
 
     NEXT_SEGMENT(4)
 
-    s.r.pc = bus.cpu_read(0xFFFEu);
+    m_r.pc = m_bus->cpu_read(0xFFFEu);
 
     END_SEGMENT
 
-    s.r.pc |= bus.cpu_read(0xFFFFu) << 8u;
+    m_r.pc |= m_bus->cpu_read(0xFFFFu) << 8u;
 
     FREE_SEGMENTS
     return true;
@@ -222,12 +223,12 @@ bool CPU::BVC()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::V) == false)
+    if (m_r.test(Register::Status::V) == false)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -239,12 +240,12 @@ bool CPU::BVS()
 {
     INIT_SEGMENTS
 
-    if (s.r.test(CPURegister::StackRegister::V) == true)
+    if (m_r.test(Register::Status::V) == true)
     {
-        s.r.pc += static_cast<int8_t>(s.r.mdr);
+        m_r.pc += static_cast<int8_t>(m_r.mdr);
         BREAK_SEGMENT(1)
 
-        if (s.r.pc >> 8u != s.r.pc - static_cast<int8_t>(s.r.mdr) >> 8u)
+        if (m_r.pc >> 8u != m_r.pc - static_cast<int8_t>(m_r.mdr) >> 8u)
             BREAK_SEGMENT(2)
     }
 
@@ -255,7 +256,7 @@ bool CPU::BVS()
 bool CPU::CLC()
 {
     /* Clear Carry Flag */
-    s.r.set(CPURegister::StackRegister::C, false);
+    m_r.set(Register::Status::C, false);
 
     return true;
 }
@@ -263,7 +264,7 @@ bool CPU::CLC()
 bool CPU::CLD()
 {
     /* Clear Decimal Flag */
-    s.r.set(CPURegister::StackRegister::D, false);
+    m_r.set(Register::Status::D, false);
 
     return true;
 }
@@ -271,7 +272,7 @@ bool CPU::CLD()
 bool CPU::CLI()
 {
     /* Clear Interrupt Disabled Flag */
-    s.r.set(CPURegister::StackRegister::I, false);
+    m_r.set(Register::Status::I, false);
 
     return true;
 }
@@ -279,7 +280,7 @@ bool CPU::CLI()
 bool CPU::CLV()
 {
     /* Clear Overflow Flag */
-    s.r.set(CPURegister::StackRegister::V, false);
+    m_r.set(Register::Status::V, false);
 
     return true;
 }
@@ -287,9 +288,9 @@ bool CPU::CLV()
 bool CPU::CMP()
 {
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::C, s.r.a >= s.r.mdr);
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == s.r.mdr);
-    s.r.set(CPURegister::StackRegister::N, (s.r.a - s.r.mdr) & 0x80u);
+    m_r.set(Register::Status::C, m_r.a >= m_r.mdr);
+    m_r.set(Register::Status::Z, m_r.a == m_r.mdr);
+    m_r.set(Register::Status::N, (m_r.a - m_r.mdr) & 0x80u);
 
     return true;
 }
@@ -297,9 +298,9 @@ bool CPU::CMP()
 bool CPU::CPX()
 {
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::C, s.r.x >= s.r.mdr);
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == s.r.mdr);
-    s.r.set(CPURegister::StackRegister::N, (s.r.x - s.r.mdr) & 0x80u);
+    m_r.set(Register::Status::C, m_r.x >= m_r.mdr);
+    m_r.set(Register::Status::Z, m_r.x == m_r.mdr);
+    m_r.set(Register::Status::N, (m_r.x - m_r.mdr) & 0x80u);
 
     return true;
 }
@@ -307,9 +308,9 @@ bool CPU::CPX()
 bool CPU::CPY()
 {
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::C, s.r.y >= s.r.mdr);
-    s.r.set(CPURegister::StackRegister::Z, s.r.y == s.r.mdr);
-    s.r.set(CPURegister::StackRegister::N, (s.r.y - s.r.mdr) & 0x80u);
+    m_r.set(Register::Status::C, m_r.y >= m_r.mdr);
+    m_r.set(Register::Status::Z, m_r.y == m_r.mdr);
+    m_r.set(Register::Status::N, (m_r.y - m_r.mdr) & 0x80u);
 
     return true;
 }
@@ -318,9 +319,9 @@ bool CPU::DEC()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1) /* Re-read from effective address */
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -334,16 +335,16 @@ bool CPU::DEC()
     START_SEGMENT(5)
 
     /* Decrement MDR */
-    s.r.mdr -= 1u;
+    m_r.mdr -= 1u;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
     
     END_SEGMENT
 
     /* Write MDR at address MAR */
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -352,11 +353,11 @@ bool CPU::DEC()
 bool CPU::DEX()
 {
     /* Decrement X */
-    s.r.x -= 1u;
+    m_r.x -= 1u;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
+    m_r.set(Register::Status::Z, m_r.x == 0u);
+    m_r.set(Register::Status::N, m_r.x & 0x80u);
 
     return true;
 }
@@ -364,11 +365,11 @@ bool CPU::DEX()
 bool CPU::DEY()
 {
     /* Decrement Y */
-    s.r.y -= 1u;
+    m_r.y -= 1u;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
+    m_r.set(Register::Status::Z, m_r.y == 0u);
+    m_r.set(Register::Status::N, m_r.y & 0x80u);
 
     return true;
 }
@@ -376,11 +377,11 @@ bool CPU::DEY()
 bool CPU::EOR()
 {
     /* Set A to A XOR MDR */
-    s.r.a ^= s.r.mdr;
+    m_r.a ^= m_r.mdr;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }
@@ -389,9 +390,9 @@ bool CPU::INC()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1) /* Re-read from effective address */
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -405,14 +406,14 @@ bool CPU::INC()
     START_SEGMENT(5)
 
     /* Increment MDR */
-    s.r.mdr += 1u;
+    m_r.mdr += 1u;
 
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
     
     END_SEGMENT
 
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -421,11 +422,11 @@ bool CPU::INC()
 bool CPU::INX()
 {
     /* Increment X */
-    s.r.x += 1u;
+    m_r.x += 1u;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
+    m_r.set(Register::Status::Z, m_r.x == 0u);
+    m_r.set(Register::Status::N, m_r.x & 0x80u);
 
     return true;
 }
@@ -433,11 +434,11 @@ bool CPU::INX()
 bool CPU::INY()
 {
     /* Increment Y */
-    s.r.y += 1u;
+    m_r.y += 1u;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
+    m_r.set(Register::Status::Z, m_r.y == 0u);
+    m_r.set(Register::Status::N, m_r.y & 0x80u);
 
     return true;
 }
@@ -445,7 +446,7 @@ bool CPU::INY()
 bool CPU::JMP()
 {
     /* Set PC to MAR */
-    s.r.pc = s.r.mar;
+    m_r.pc = m_r.mar;
 
     return true;
 }
@@ -454,17 +455,18 @@ bool CPU::JSR()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
     /* Push Decremented PCH into stack */
-    bus.cpu_write(--s.r.pc >> 8u, 0x100u + s.r.sp--);
+    m_bus->cpu_write(--m_r.pc >> 8u, 0x100u + m_r.sp--);
 
     NEXT_SEGMENT(2)
     /* Push PCL into stack */
-    bus.cpu_write(s.r.pc & 0x00FFu, 0x100u + s.r.sp--);
+    m_bus->cpu_write(m_r.pc & 0x00FFu, 0x100u + m_r.sp--);
 
     END_SEGMENT
     /* Set PC to the Absolute Address */
-    s.r.pc = s.r.mar;
+    m_r.pc = m_r.mar;
 
     FREE_SEGMENTS
     return true;
@@ -473,9 +475,9 @@ bool CPU::JSR()
 bool CPU::LDA()
 {
     /* Write contents of MDR to A */
-    s.r.a = s.r.mdr;
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.a = m_r.mdr;
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }
@@ -483,9 +485,9 @@ bool CPU::LDA()
 bool CPU::LDX()
 {
     /* Write contents of MDR to X */
-    s.r.x = s.r.mdr;
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
+    m_r.x = m_r.mdr;
+    m_r.set(Register::Status::Z, m_r.x == 0u);
+    m_r.set(Register::Status::N, m_r.x & 0x80u);
 
     return true;
 }
@@ -493,9 +495,9 @@ bool CPU::LDX()
 bool CPU::LDY()
 {
     /* Write contents of MDR to Y */
-    s.r.y = s.r.mdr;
-    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
+    m_r.y = m_r.mdr;
+    m_r.set(Register::Status::Z, m_r.y == 0u);
+    m_r.set(Register::Status::N, m_r.y & 0x80u);
 
     return true;
 }
@@ -504,9 +506,10 @@ bool CPU::LSR()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1) /* Re-read from effective address */
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -514,19 +517,19 @@ bool CPU::LSR()
         /* Re-read from effective address */
         BREAK_SEGMENT(3)
     }
-    else if (s.mode != CPUMode::ACC)
+    else if (m_mode != Mode::ACC)
         BREAK_SEGMENT(4)
 
     START_SEGMENT(5)
 
-    s.r.set(CPURegister::StackRegister::C, s.r.mdr & 0x01u);
-    s.r.mdr >>= 1u;
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::C, m_r.mdr & 0x01u);
+    m_r.mdr >>= 1u;
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
 
-    if (s.mode == CPUMode::ACC)
+    if (m_mode == Mode::ACC)
     {
-        s.r.a = s.r.mdr;
+        m_r.a = m_r.mdr;
 
         FREE_SEGMENTS
         return true;
@@ -534,7 +537,7 @@ bool CPU::LSR()
 
     END_SEGMENT
 
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -549,10 +552,10 @@ bool CPU::NOP()
 bool CPU::ORA()
 {
     /* Set A = A | MDR */
-    s.r.a |= s.r.mdr; /* Push A into the stack */
+    m_r.a |= m_r.mdr; /* Push A into the stack */
 
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }
@@ -561,6 +564,7 @@ bool CPU::PHA()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -568,7 +572,7 @@ bool CPU::PHA()
     END_SEGMENT
 
     /* Push A into the stack */
-    bus.cpu_write(s.r.a, 0x100u + s.r.sp--);
+    m_bus->cpu_write(m_r.a, 0x100u + m_r.sp--);
 
     FREE_SEGMENTS
     return true;
@@ -578,6 +582,7 @@ bool CPU::PHP()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -585,7 +590,7 @@ bool CPU::PHP()
     END_SEGMENT
 
     /* Push P into the stack */
-    bus.cpu_write(s.r.sr, 0x100u + s.r.sp--);
+    m_bus->cpu_write(m_r.sr, 0x100u + m_r.sp--);
 
     FREE_SEGMENTS
     return true;
@@ -595,6 +600,7 @@ bool CPU::PLA()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -602,15 +608,15 @@ bool CPU::PLA()
     NEXT_SEGMENT(2)
 
     /* Increment SP */
-    ++s.r.sp;
+    ++m_r.sp;
     
     END_SEGMENT;
 
     /* Pull A from stack */
-    s.r.a = bus.cpu_read(0x100u + s.r.sp);
+    m_r.a = m_bus->cpu_read(0x100u + m_r.sp);
 
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     FREE_SEGMENTS
     return true;
@@ -620,6 +626,7 @@ bool CPU::PLP()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -627,16 +634,16 @@ bool CPU::PLP()
     NEXT_SEGMENT(2);
 
     /* Increment SP */
-    ++s.r.sp;
+    ++m_r.sp;
 
     END_SEGMENT;
 
     /* Pull P from stack */
-    s.r.mdr = s.r.sr;
-    s.r.sr = bus.cpu_read(0x100u + s.r.sp);
+    m_r.mdr = m_r.sr;
+    m_r.sr = m_bus->cpu_read(0x100u + m_r.sp);
 
-    s.r.set(CPURegister::StackRegister::X, s.r.mdr & 0x20u);
-    s.r.set(CPURegister::StackRegister::B, s.r.mdr & 0x10u);
+    m_r.set(Register::Status::X, m_r.mdr & 0x20u);
+    m_r.set(Register::Status::B, m_r.mdr & 0x10u);
 
     FREE_SEGMENTS
     return true;
@@ -646,9 +653,9 @@ bool CPU::ROL()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1) /* Re-read from effective address */
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -656,22 +663,22 @@ bool CPU::ROL()
         /* Re-read from effective address */
         BREAK_SEGMENT(3)
     }
-    else if (s.mode != CPUMode::ACC)
+    else if (m_mode != Mode::ACC)
         BREAK_SEGMENT(4)
 
     START_SEGMENT(5)
 
-    auto C = s.r.mdr >> 7u;
+    auto C = m_r.mdr >> 7u;
 
-    s.r.mdr = s.r.mdr << 1u | s.r.test(CPURegister::StackRegister::C);
+    m_r.mdr = m_r.mdr << 1u | m_r.test(Register::Status::C);
 
-    s.r.set(CPURegister::StackRegister::C, C);
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr & 0x80u);
+    m_r.set(Register::Status::C, C);
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr & 0x80u);
 
-    if (s.mode == CPUMode::ACC)
+    if (m_mode == Mode::ACC)
     {
-        s.r.a = s.r.mdr;
+        m_r.a = m_r.mdr;
 
         FREE_SEGMENTS
         return true;
@@ -680,7 +687,7 @@ bool CPU::ROL()
     END_SEGMENT
 
     /* Write to effective address */
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -690,9 +697,9 @@ bool CPU::ROR()
 {
     INIT_SEGMENTS
 
-    if (s.mode == CPUMode::ABX && s.r.mar >> 8u != s.r.mar - s.r.x >> 8u)
+    if (m_mode == Mode::ABX && m_r.mar >> 8u != m_r.mar - m_r.x >> 8u)
         BREAK_SEGMENT(1)
-    else if (s.mode == CPUMode::ABX && s.r.mar >> 8u == s.r.mar - s.r.x >> 8u)
+    else if (m_mode == Mode::ABX && m_r.mar >> 8u == m_r.mar - m_r.x >> 8u)
     {
         /* Fix high address byte */
         BREAK_SEGMENT(2)
@@ -700,22 +707,22 @@ bool CPU::ROR()
         /* Re-read from effective address */
         BREAK_SEGMENT(3)
     }
-    else if (s.mode != CPUMode::ACC)
+    else if (m_mode != Mode::ACC)
         BREAK_SEGMENT(4)
 
     START_SEGMENT(5)
 
-    auto C = s.r.mdr & 0x0001u;
+    auto C = m_r.mdr & 0x0001u;
 
-    s.r.mdr = s.r.mdr >> 1u | s.r.test(CPURegister::StackRegister::C) << 7u;
+    m_r.mdr = m_r.mdr >> 1u | m_r.test(Register::Status::C) << 7u;
 
-    s.r.set(CPURegister::StackRegister::C, C);
-    s.r.set(CPURegister::StackRegister::Z, s.r.mdr == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.mdr >> 7u);
+    m_r.set(Register::Status::C, C);
+    m_r.set(Register::Status::Z, m_r.mdr == 0u);
+    m_r.set(Register::Status::N, m_r.mdr >> 7u);
 
-    if (s.mode == CPUMode::ACC)
+    if (m_mode == Mode::ACC)
     {
-        s.r.a = s.r.mdr;
+        m_r.a = m_r.mdr;
         
         FREE_SEGMENTS
         return true;
@@ -724,7 +731,7 @@ bool CPU::ROR()
     END_SEGMENT
 
     /* Write to effective address */
-    bus.cpu_write(s.r.mdr, s.r.mar);
+    m_bus->cpu_write(m_r.mdr, m_r.mar);
     
     FREE_SEGMENTS
     return true;
@@ -734,6 +741,7 @@ bool CPU::RTI()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -741,26 +749,26 @@ bool CPU::RTI()
     NEXT_SEGMENT(2)
 
     /* Increment Stack Pointer */
-    ++s.r.sp;
+    ++m_r.sp;
 
     NEXT_SEGMENT(3)
 
     /* Pull P from the Stack */
-    s.r.mdr = s.r.sr;
-    s.r.sr = bus.cpu_read(0x100u + s.r.sp);
+    m_r.mdr = m_r.sr;
+    m_r.sr = m_bus->cpu_read(0x100u + m_r.sp);
 
-    s.r.set(CPURegister::StackRegister::X, s.r.mdr & 0x20u);
-    s.r.set(CPURegister::StackRegister::B, s.r.mdr & 0x10u);
+    m_r.set(Register::Status::X, m_r.mdr & 0x20u);
+    m_r.set(Register::Status::B, m_r.mdr & 0x10u);
 
     NEXT_SEGMENT(4)
 
     /* Pull PCL from the Stack */
-    s.r.pc = bus.cpu_read(0x100u + ++s.r.sp);
+    m_r.pc = m_bus->cpu_read(0x100u + ++m_r.sp);
 
     END_SEGMENT
 
     /* Pull PCH from the Stack */
-    s.r.pc |= bus.cpu_read(0x100u + ++s.r.sp) << 8u;
+    m_r.pc |= m_bus->cpu_read(0x100u + ++m_r.sp) << 8u;
 
     FREE_SEGMENTS
     return true;
@@ -770,6 +778,7 @@ bool CPU::RTS()
 {
     INIT_SEGMENTS
 
+
     START_SEGMENT(1)
 
     /* Tick after dummy read */
@@ -777,22 +786,22 @@ bool CPU::RTS()
     NEXT_SEGMENT(2)
 
     /* Increment SP */
-    s.r.sp++;
+    m_r.sp++;
 
     NEXT_SEGMENT(3)
 
     /* Pull PCL from stack */
-    s.r.pc = bus.cpu_read(0x100u + s.r.sp++);
+    m_r.pc = m_bus->cpu_read(0x100u + m_r.sp++);
 
     NEXT_SEGMENT(4)
 
     /* Pull PCH from stack */
-    s.r.pc |= bus.cpu_read(0x100u + s.r.sp) << 8u;
+    m_r.pc |= m_bus->cpu_read(0x100u + m_r.sp) << 8u;
 
     END_SEGMENT
 
     /* Increment PC */
-    ++s.r.pc;
+    ++m_r.pc;
 
     FREE_SEGMENTS
     return true;
@@ -801,16 +810,16 @@ bool CPU::RTS()
 bool CPU::SBC()
 {
     /* Invert bits of MDR */
-    uint16_t value = s.r.mdr ^ 0x00FFu;
+    uint16_t value = m_r.mdr ^ 0x00FFu;
 
-    uint16_t temp = s.r.a + value + s.r.test(CPURegister::StackRegister::C);
+    uint16_t temp = m_r.a + value + m_r.test(Register::Status::C);
 
-    s.r.set(CPURegister::StackRegister::C, temp > 0x00FFu);
-    s.r.set(CPURegister::StackRegister::Z, (temp & 0x00FFu) == 0u);
-    s.r.set(CPURegister::StackRegister::V, ((temp ^ s.r.a) & (s.r.a ^ s.r.mdr)) & 0x0080u);
-    s.r.set(CPURegister::StackRegister::N, temp & 0x0080u);
+    m_r.set(Register::Status::C, temp > 0x00FFu);
+    m_r.set(Register::Status::Z, (temp & 0x00FFu) == 0u);
+    m_r.set(Register::Status::V, ((temp ^ m_r.a) & (m_r.a ^ m_r.mdr)) & 0x0080u);
+    m_r.set(Register::Status::N, temp & 0x0080u);
 
-    s.r.a = temp & 0x00FFu;
+    m_r.a = temp & 0x00FFu;
 
     return true;
 }
@@ -818,7 +827,7 @@ bool CPU::SBC()
 bool CPU::SEC()
 {
     /* Set Carry Flag to True */
-    s.r.set(CPURegister::StackRegister::C, true);
+    m_r.set(Register::Status::C, true);
 
     return true;
 }
@@ -826,7 +835,7 @@ bool CPU::SEC()
 bool CPU::SED()
 {
     /* Set Decimal Flag to True */
-    s.r.set(CPURegister::StackRegister::D, true);
+    m_r.set(Register::Status::D, true);
 
     return true;
 }
@@ -834,7 +843,7 @@ bool CPU::SED()
 bool CPU::SEI()
 {
     /* Set Interrupt Disable Flag to True */
-    s.r.set(CPURegister::StackRegister::I, true);
+    m_r.set(Register::Status::I, true);
 
     return true;
 }
@@ -844,15 +853,15 @@ bool CPU::STA()
     INIT_SEGMENTS
 
     /* Take an extra cycle if high byte was not fixed */
-    if (s.mode == CPUMode::IDY && (s.r.mar >> 8u == s.r.mar - s.r.y >> 8u))
-        BREAK_SEGMENT(1);
-    else if (s.mode == CPUMode::ABX && (s.r.mar >> 8u == s.r.mar - s.r.x >> 8u))
-        BREAK_SEGMENT(2);
-    else if (s.mode == CPUMode::ABY && (s.r.mar >> 8u == s.r.mar - s.r.y >> 8u))
-        BREAK_SEGMENT(3);
+    if (m_mode == Mode::IDY && (m_r.mar >> 8u == m_r.mar - m_r.y >> 8u))
+        BREAK_SEGMENT(1)
+    else if (m_mode == Mode::ABX && (m_r.mar >> 8u == m_r.mar - m_r.x >> 8u))
+        BREAK_SEGMENT(2)
+    else if (m_mode == Mode::ABY && (m_r.mar >> 8u == m_r.mar - m_r.y >> 8u))
+        BREAK_SEGMENT(3)
 
     /* Store A at MAR */
-    bus.cpu_write(s.r.a, s.r.mar);
+    m_bus->cpu_write(m_r.a, m_r.mar);
 
     FREE_SEGMENTS
     return true;
@@ -861,7 +870,7 @@ bool CPU::STA()
 bool CPU::STX()
 {
     /* Store X at MAR */
-    bus.cpu_write(s.r.x, s.r.mar);
+    m_bus->cpu_write(m_r.x, m_r.mar);
 
     return true;
 }
@@ -869,7 +878,7 @@ bool CPU::STX()
 bool CPU::STY()
 {
     /* Store X at MAR */
-    bus.cpu_write(s.r.y, s.r.mar);
+    m_bus->cpu_write(m_r.y, m_r.mar);
 
     return true;
 }
@@ -877,11 +886,11 @@ bool CPU::STY()
 bool CPU::TAX()
 {
     /* Transfer A to X */
-    s.r.x = s.r.a;
+    m_r.x = m_r.a;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
+    m_r.set(Register::Status::Z, m_r.x == 0u);
+    m_r.set(Register::Status::N, m_r.x & 0x80u);
 
     return true;
 }
@@ -889,11 +898,11 @@ bool CPU::TAX()
 bool CPU::TAY()
 {
     /* Transfer A to Y */
-    s.r.y = s.r.a;
+    m_r.y = m_r.a;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.y == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.y & 0x80u);
+    m_r.set(Register::Status::Z, m_r.y == 0u);
+    m_r.set(Register::Status::N, m_r.y & 0x80u);
 
     return true;
 }
@@ -901,11 +910,11 @@ bool CPU::TAY()
 bool CPU::TSX()
 {
     /* Transfer SP to X */
-    s.r.x = s.r.sp;
+    m_r.x = m_r.sp;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.x == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.x & 0x80u);
+    m_r.set(Register::Status::Z, m_r.x == 0u);
+    m_r.set(Register::Status::N, m_r.x & 0x80u);
 
     return true;
 }
@@ -913,11 +922,11 @@ bool CPU::TSX()
 bool CPU::TXA()
 {
     /* Transfer X to A */
-    s.r.a = s.r.x;
+    m_r.a = m_r.x;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }
@@ -925,18 +934,18 @@ bool CPU::TXA()
 bool CPU::TXS()
 {
     /* Transfer X to SP */
-    s.r.sp = s.r.x;
+    m_r.sp = m_r.x;
 
     return true;
 }
 
 bool CPU::TYA()
 {
-    s.r.a = s.r.y;
+    m_r.a = m_r.y;
 
     /* Set Flags */
-    s.r.set(CPURegister::StackRegister::Z, s.r.a == 0u);
-    s.r.set(CPURegister::StackRegister::N, s.r.a & 0x80u);
+    m_r.set(Register::Status::Z, m_r.a == 0u);
+    m_r.set(Register::Status::N, m_r.a & 0x80u);
 
     return true;
 }

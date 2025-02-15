@@ -1,6 +1,4 @@
 add_library(cpu 
-    cpuregister.cpp 
-    cpustate.cpp 
     instructions.cpp
     interrupts.cpp
     modes.cpp

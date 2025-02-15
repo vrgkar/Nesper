@@ -24,7 +24,7 @@ std::string CPU::disassemble(uint16_t addr)
 {
     auto pstate = m_state;
 
-    m_state.r.pc = addr;
+   // m_state.r.pc = addr;
 
     m_state = pstate;
 
@@ -33,16 +33,21 @@ std::string CPU::disassemble(uint16_t addr)
 
 void CPU::step()
 {
-    if (m_state.process == CPUProcess::FETCH)
+    ++m_cycles;
+    
+    if (m_state == State::FETCH)
         fetch();
 
-    else if (m_state.process == CPUProcess::DECODE)
+    if (m_state == State::DECODE)
         decode();
 
-    else if (m_state.process == CPUProcess::EXECUTE)
-        execute();
+    if (m_state == State::EXECUTE_MODE)
+        execute_mode();
 
-    else if (m_state.process == CPUProcess::INTERRUPT)
+    if (m_state == State::EXECUTE_INSTRUCTION)
+        execute_instruction();
+
+    if (m_state == State::INTERRUPT)
         interrupt();
 }
 
@@ -50,10 +55,10 @@ void CPU::step_instruction()
 {
     do
         step();
-    while (m_state.process != CPUProcess::FETCH);
+    while (m_state != State::FETCH);
 }
 
 std::string CPU::get_instr_disassembly()
 {
-    return m_instr;
+    return "";
 }
