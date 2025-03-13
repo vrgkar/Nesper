@@ -1,1 +1,1 @@
-add_library(apu apu.cpp)
+target_sources(Nesper PRIVATE apu.cpp)

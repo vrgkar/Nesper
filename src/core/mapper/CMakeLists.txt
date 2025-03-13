@@ -1,4 +1,5 @@
-add_library(mapper 
+target_sources(
+    Nesper PRIVATE 
     mapper.cpp 
     mapper_factory.cpp
     mapper000.cpp

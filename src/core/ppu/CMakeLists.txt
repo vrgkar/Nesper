@@ -1,1 +1,4 @@
-add_library(ppu ppu.cpp ppuregister.cpp)
+target_sources(
+    Nesper PRIVATE
+    ppu.cpp
+)

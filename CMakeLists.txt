@@ -11,10 +11,11 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(wxWidgets REQUIRED COMPONENTS net core base richtext)
+find_package(wxWidgets REQUIRED COMPONENTS core base richtext gl)
+find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
+
 include(${wxWidgets_USE_FILE})
 
-add_subdirectory(src bin)
-
 add_executable(Nesper src/main.cpp)
-target_link_libraries(Nesper PUBLIC core gui)
+add_subdirectory(src bin)
