@@ -6,22 +6,21 @@
 
 #include "common/component.h"
 #include "common/rom.h"
+#include "bus/bus.h"
 
 class Mapper : public Component
 {
 public:
     /* Reads from an address, and returns whether it read the value into byte */
-    virtual bool read(uint8_t &byte, uint16_t addr) = 0;
+    virtual uint8_t read(uint16_t addr) = 0;
 
     /* Writes to memory, and returns whether it wrote the value at the given address */
-    virtual bool write(uint8_t byte, uint16_t addr) = 0;
+    virtual void write(uint8_t byte, uint16_t addr) = 0;
 
-    void broadcast(Event event) override;
-
-    void service(Event event) override;
-
-
+    /* Returns the ID of the mapper */
     virtual std::string_view get_id() const = 0;
+
+    void connect(Bus *bus) { m_bus = bus; m_bus->connect(this); }
 
     virtual ~Mapper() = default;
 
@@ -59,5 +58,9 @@ protected:
 
     std::vector<uint8_t> m_prgram;
     std::vector<uint8_t> m_chrram;
+
+    std::array<uint8_t, 0x800> m_vram;
+
+    Bus *m_bus = nullptr;
 
 };

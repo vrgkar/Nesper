@@ -6,18 +6,19 @@
 
 #include "bus/bus.h"
 
+#include <fstream>
+
 class CPU final : public Component
 {
 public:
     /* Component Interface */
-    bool read(uint8_t &byte, uint16_t addr) override;
-    bool write(uint8_t byte, uint16_t addr) override;
+    uint8_t read(uint16_t addr) override;
+    void write(uint8_t byte, uint16_t addr) override;
 
     std::string_view get_id() const override { return "CPU"; }
-    
-    void broadcast(Event event) override;
-    void service(Event event) override;
 
+    void process_events() override;
+    
     /* CPU Functions */
     void step();
     void step_instruction();
@@ -25,9 +26,14 @@ public:
 
     std::string disassemble(uint16_t addr);
 
-    void set_bus(Bus *bus) { m_bus = bus; }
+    void connect(Bus *bus) { m_bus = bus; m_bus->connect(this); }
+
+    void suspend()                  { push_state(m_state); m_state = State::SUSPEND; }
+    void resume()                   { m_state = top_state(); pop_state(); }
 
 private:
+
+    std::ofstream m_log;
     struct Register
     {
         enum Status : unsigned
@@ -54,10 +60,10 @@ private:
         uint8_t y = 0x0u;
     
         /* Program Counter */
-        uint16_t pc = 0xC000u;
+        uint16_t pc;
     
         /* Stack Pointer */
-        uint8_t sp = 0xFDu;
+        uint8_t sp = 0;
     
         /* Status Register */
         uint8_t sr = 0x24u;
@@ -66,8 +72,14 @@ private:
         uint16_t mar;
     
         /* Memory Data Register */
-        uint8_t mdr;        
+        uint8_t mdr;
         
+        /* OAM DMA Register */
+        uint8_t oamdma = 0;
+
+        /* Joystick Strobe Register */
+        uint8_t joystrobe = 0;
+
     } m_r;
     
     enum class State
@@ -76,8 +88,15 @@ private:
         DECODE,
         EXECUTE_MODE,
         EXECUTE_INSTRUCTION,
-        INTERRUPT
-    } m_state = State::FETCH;
+        INTERRUPT,
+        SUSPEND
+    } m_state = State::INTERRUPT;
+
+    std::vector<State> m_state_stack = {};
+
+    void push_state(State state)    { m_state_stack.push_back(state); }
+    State top_state()               { return m_state_stack.back(); }
+    void pop_state()                { m_state_stack.pop_back(); }
     
     enum class Mode
     {
@@ -94,7 +113,7 @@ private:
         IND,
         IDX,
         IDY
-    } m_mode = Mode::IMP;
+    } m_mode;
 
     enum class Instruction
     {
@@ -154,13 +173,13 @@ private:
         TXA,
         TXS,
         TYA
-    } m_instr = Instruction::NOP;
+    } m_instr;
 
     enum class Interrupt
     {
         RST,
         IRQ,
-        NMI
+        NMI,
     } m_interrupt = Interrupt::RST;
 
     /* Opcode of current instruction */
@@ -173,6 +192,9 @@ private:
     Bus *m_bus = nullptr;
 
 private:
+    /* Utility Functions */
+    std::string instruction_to_string(Instruction instr);
+    std::string mode_to_string(Mode mode);
 
     /* States */
     void fetch();

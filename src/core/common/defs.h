@@ -5,5 +5,7 @@
 #define END_SEGMENT return false; }
 #define NEXT_SEGMENT(n) END_SEGMENT else START_SEGMENT(n)
 #define BREAK_SEGMENT(n) START_SEGMENT(n) END_SEGMENT
+#define GOTO_SEGMENT(n) __segment_number = n-1;
+#define REPEAT_SEGMENT --__segment_number;
 #define FREE_SEGMENTS __segment_number = 0;
 

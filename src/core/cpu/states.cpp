@@ -2,7 +2,7 @@
 
 void CPU::fetch()
 {
-    m_opcode = m_bus->cpu_read(m_r.pc++);
+    m_opcode = m_bus->read_cpu(m_r.pc++);
     m_state = State::DECODE;
 }
 

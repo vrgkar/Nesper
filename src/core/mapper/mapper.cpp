@@ -1,19 +1,14 @@
 #include "mapper.h"
 
-void Mapper::broadcast(Event event)
-{
-
-}
-
-void Mapper::service(Event event)
-{
-
-}
-
 void Mapper::load_rom(const ROM &rom)
 {
     m_prgrom = rom.prgrom;
     m_chrrom = rom.chrrom;
+
+    m_chrbanks = rom.chrbanks;
+    m_prgbanks = rom.prgbanks;
+
+    m_mirroring = rom.mirroring ? Mirroring::VERTICAL : Mirroring::HORIZONTAL; 
 
     m_prgram.resize(0x2000);
     m_chrram.resize(0x2000);
